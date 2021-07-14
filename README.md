@@ -90,7 +90,7 @@ Copyright (c) 2021-present NAVER Corp.
 
 SPLADE is licensed under a
 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
-(see [license](LICENSE.txt))
+(see [license](license.txt))
 
 You should have received a copy of the license along with this
 work. If not, see http://creativecommons.org/licenses/by-nc-sa/4.0/ .
