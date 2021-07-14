@@ -1,8 +1,7 @@
 # SPLADE :fork_and_knife:+ :spoon: = :mag_right:
 
 This repository contains the weights for two models as well as the code for running inference for our SIGIR21 paper:
-**SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking**, *Thibault Formal*, *Benjamin Piwowarski* and *
-Stéphane Clinchant*.
+**SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking**, *Thibault Formal*, *Benjamin Piwowarski* and *Stéphane Clinchant*.
 
 **TL; DR**  
 Recently, dense retrieval with approximate nearest neighbors search based on BERT has demonstrated its strength for
