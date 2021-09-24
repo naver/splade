@@ -82,3 +82,4 @@ wcwidth==0.2.5
 webencodings==0.5.1
 websocket-client==1.1.0
 widgetsnbextension==3.5.1
+beir==0.2.1
