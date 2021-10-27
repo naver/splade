@@ -10,15 +10,17 @@ MRR, R@1k and NDCG numbers are multiplied by 100 for simplicity of presentation.
 |-------------------------------------------------------------:|:-------:|:-----:|:---------:|:-----:|:---------:|:-----:|:-------:|:-----:|
 |                                                        Model |  MRR@10 |  R@1k |           |  R@1k |           |  R@1k | NDCG@10 |FLOPS  |
 |                                                    Baselines |         |       |           |       |           |       |         |       |
-|        bert (sentence-transformers/msmarco-bert-base-dot-v5) |   38.1  |  ???  |    71.9   |  ???  |    72.3   |  ???  |         |       |
+|        bert (sentence-transformers/msmarco-bert-base-dot-v5) |   38.1  |  ???  |    71.9   |  ???  |    72.3   |  ???  | ???     | N/A   |
 |        distilSplade v2                                       |   36.8  |  97.9 |    72.9   |  86.5 |    71.0   |  83.4 | 50.6    | 3.82  |
 |                              Splade_max (train_max.py)       |         |       |           |       |           |       |         |       |
-|          distilbert-base-uncased,λq=0.0008, λd=0.0006        |   36.8  |  97.7 |    72.4               |  82.7     |    70.6   |  78.1 |         | 1.14  |
-|              Luyu/co-condenser-marco,λq=0.0008, λd=0.0006    |   **38.2**  |  **98.5** |    **73.6**   |  84.3     |  72.4     |  78.7 |         | 1.48  |
+|          distilbert-base-uncased,λq=0.0008, λd=0.0006        |   36.8  |  97.7 |    72.4               |  82.7     |    70.6   |  78.1 |  ???       | 1.14  |
+|              Luyu/co-condenser-marco,λq=0.0008, λd=0.0006    |   **38.2**  |  **98.5** |    **73.6**   |  84.3     |  72.4     |  78.7 |  ???       | 1.48  |
+|                 Luyu/co-condenser-marco,λq=0.008, λd=0.006   |   37.0  |  97.8 |  70.6     |  81.2 |  69.3     | 76.1  |  ???       |  0.33 |
 |                              DistilSplade (train_distill.py) |         |       |           |       |           |       |         |       |
 |          distilbert-base-uncased,λq=0.01, λd=0.008           |   38.5  |  98.0 |    **74.2**   |  **87.8** |    71.9   |  82.6 | 50.1    | 3.85  |
 |              Luyu/co-condenser-marco,λq=0.01, λd=0.008       |   **39.3**  |  **98.4** |    72.5   |  **87.8** |    **73.0**   |  **83.5** | **51.0**    | 5.35  |
-
+|                    Luyu/co-condenser-marco,λq=0.1, λd=0.08   |   39.0  |  98.2 | **74.2**  |  87.5 |    71.8   |  83.3 |  ???    | 1.96  |
+|                    Luyu/co-condenser-marco,λq=1.0, λd=0.8    |   37.8  |  97.8 |    71.0   |  85.4 |    70.0   |  80.4 |  ???    | 0.42  |
 
 ## Differences from paper:
 
@@ -56,12 +58,15 @@ For ensembles, scores are normalized following [pyserini --normalization](https:
 |          distilbert-base-uncased,λq=0.00008, λd=0.00006      |   36.8  |  98.0 |    72.4               |  **84.7** |    72.0   |  **79.1** | 49.1    | 3.39  |
 |      **A**:   Luyu/co-condenser-wiki,λq=0.0008, λd=0.0006    |   37.2  |  98.0 |    69.6               |  83.1     |    **72.8**   |  79.0 |         | 1.26  |
 |      **B**:  Luyu/co-condenser-marco,λq=0.0008, λd=0.0006    |   **38.2**  |  **98.5** |    **73.6**   |  84.3     |  72.4     |  78.7 |         | 1.48  |
+|                 Luyu/co-condenser-marco,λq=0.008, λd=0.006   |   37.0  |  97.8 |  70.6     |  81.2 |  69.3     | 76.1  |         |  0.33 |
 |                              DistilSplade (train_distill.py) |         |       |           |       |           |       |         |       |
 |          distilbert-base-uncased,λq=0.1, λd=0.08             |   38.2  |  97.8 |    73.8   |  87.0 |    71.5   |  82.6 |         | 1.95  |
 |      **C**: distilbert-base-uncased,λq=0.01, λd=0.008        |   38.5  |  98.0 |    **74.2**   |  **87.8** |    71.9   |  82.6 | 50.1    | 3.85  |
 |      **D**: distilbert-base-uncased,λq=0.001, λd=0.0008      |   38.7  |  98.1 |    72.4   |  87.0 |    71.7   |  83.4 |         | 7.81  |
 |      **E**:   Luyu/co-condenser-wiki,λq=0.01, λd=0.008       |   38.7  |  98.2 |    73.3   |  87.0 |    72.4   |  83.0 |         | 4.57  |
 |      **F**:  Luyu/co-condenser-marco,λq=0.01, λd=0.008       |   **39.3**  |  **98.4** |    72.5   |  **87.8** |    **73.0**   |  **83.5** | **51.0**    | 5.35  |
+|                    Luyu/co-condenser-marco,λq=0.1, λd=0.08   |   39.0  |  98.2 | **74.2**  |  87.5 |    71.8   |  83.3 |         | 1.96  |
+|                    Luyu/co-condenser-marco,λq=1.0, λd=0.8    |   37.8  |  97.8 |    71.0   |  85.4 |    70.0   |  80.4 |         | 0.42  |
 |                              Ensemble (normalized scores)    |         |       |           |       |           |       |         |       |
 |                              B+E+F                           |   39.9  |  98.6 |    73.9   |  87.7 |    73.9   |  83.3 |         | 11.40 |
 |                              A+B+E+F                         |   39.8  |  98.5 |    72.7   |  87.3 |    73.7   |  83.4 |         | 12.66 |
