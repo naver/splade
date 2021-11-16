@@ -44,16 +44,13 @@ args = parser.parse_args()
 
 logging.info(str(args))
 
-
-
-# The  model we want to fine-tune
-train_batch_size = args.train_batch_size          #Increasing the train batch size improves the model performance, but requires more GPU memory
+train_batch_size = args.train_batch_size  # Increasing the train batch size generally improves the model performance, but requires more GPU memory
 model_name = args.model_name
 max_passages = args.max_passages
-max_seq_length = args.max_seq_length            #Max length for passages. Increasing it, requires more GPU memory
+max_seq_length = args.max_seq_length  # Max length for passages. Increasing it implies more GPU memory needed
 
 num_negs_per_system = args.num_negs_per_system  # We used different systems to mine hard negatives. Number of hard negatives to add from each system
-num_epochs = args.epochs         # Number of epochs we want to train
+num_epochs = args.epochs  # Number of epochs we want to train
 
 # Load our embedding model
 logging.info("Create new SBERT model")
@@ -61,7 +58,6 @@ word_embedding_model = models.MLMTransformer(model_name, max_seq_length=max_seq_
 model = SentenceTransformer(modules=[word_embedding_model])
 
 model_save_path = f'output/distilSplade_{args.lambda_q}_{args.lambda_d}_{model_name.replace("/", "-")}-batch_size_{train_batch_size}-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
-
 
 # Write self to path
 os.makedirs(model_save_path, exist_ok=True)
@@ -71,12 +67,11 @@ copyfile(__file__, train_script_path)
 with open(train_script_path, 'a') as fOut:
     fOut.write("\n\n# Script was called via:\n#python " + " ".join(sys.argv))
 
-
-### Now we read the MS Marco dataset
+### Now we read the MS MARCO dataset
 data_folder = 'msmarco-data'
 
-#### Read the corpus files, that contain all the passages. Store them in the corpus dict
-corpus = {}         #dict in the format: passage_id -> passage. Stores all existent passages
+#### Read the corpus file containing all the passages. Store them in the corpus dict
+corpus = {}  # dict in the format: passage_id -> passage. Stores all existing passages
 collection_filepath = os.path.join(data_folder, 'collection.tsv')
 if not os.path.exists(collection_filepath):
     tar_filepath = os.path.join(data_folder, 'collection.tar.gz')
@@ -94,9 +89,8 @@ with open(collection_filepath, 'r', encoding='utf8') as fIn:
         pid = int(pid)
         corpus[pid] = passage
 
-
 ### Read the train queries, store in queries dict
-queries = {}        #dict in the format: query_id -> query. Stores all training queries
+queries = {}  # dict in the format: query_id -> query. Stores all training queries
 queries_filepath = os.path.join(data_folder, 'queries.train.tsv')
 if not os.path.exists(queries_filepath):
     tar_filepath = os.path.join(data_folder, 'queries.tar.gz')
@@ -107,16 +101,14 @@ if not os.path.exists(queries_filepath):
     with tarfile.open(tar_filepath, "r:gz") as tar:
         tar.extractall(path=data_folder)
 
-
 with open(queries_filepath, 'r', encoding='utf8') as fIn:
     for line in fIn:
         qid, query = line.strip().split("\t")
         qid = int(qid)
         queries[qid] = query
 
-
 # Load a dict (qid, pid) -> ce_score that maps query-ids (qid) and paragraph-ids (pid)
-# to the CrossEncoder score computed by the cross-encoder/ms-marco-MiniLM-L-6-v2 model
+# to the CrossEncoder score computed by the cross-encoder-ms-marco-MiniLM-L-6-v2 model
 ce_scores_file = os.path.join(data_folder, 'cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl.gz')
 if not os.path.exists(ce_scores_file):
     logging.info("Download cross-encoder scores file")
@@ -131,7 +123,6 @@ hard_negatives_filepath = os.path.join(data_folder, 'msmarco-hard-negatives.json
 if not os.path.exists(hard_negatives_filepath):
     logging.info("Download cross-encoder scores file")
     util.http_get('https://huggingface.co/datasets/sentence-transformers/msmarco-hard-negatives/resolve/main/msmarco-hard-negatives.jsonl.gz', hard_negatives_filepath)
-
 
 logging.info("Read hard negatives train file")
 train_queries = {}
@@ -172,7 +163,7 @@ with gzip.open(hard_negatives_filepath, 'rt') as fIn:
 
 logging.info("Train queries: {}".format(len(train_queries)))
 
-# We create a custom MSMARCO dataset that returns triplets (query, positive, negative)
+# We create a custom MS MARCO dataset that returns triplets (query, positive, negative)
 # on-the-fly based on the information from the mined-hard-negatives jsonl file.
 class MSMARCODataset(Dataset):
     def __init__(self, queries, corpus, ce_scores):
@@ -225,8 +216,7 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
           use_amp=True,
           checkpoint_path=model_save_path,
           checkpoint_save_steps=10000,
-          optimizer_params = {'lr': args.lr},
-          )
+          optimizer_params = {'lr': args.lr})
 
-# Train latest model
+# Save latest model
 model.save(model_save_path)
