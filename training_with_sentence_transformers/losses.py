@@ -20,7 +20,7 @@ def pairwise_dot_score(a: Tensor, b: Tensor):
 
 def dot_score(a: Tensor, b: Tensor):
     """
-    Computes the dot-product dot_prod(a[i], b[j]) for all i and j.
+    Computes the dot-product dot_prod(a[i], b[j]) for all i and j
     :return: Matrix with res[i][j]  = dot_prod(a[i], b[j])
     """
     if not isinstance(a, torch.Tensor):
@@ -47,14 +47,14 @@ class FLOPS:
 
 class MarginMSELossSplade(nn.Module):
     """
-    Compute the MSE loss between the |sim(Query, Pos) - sim(Query, Neg)| and |gold_sim(Q, Pos) - gold_sim(Query, Neg)|.
-    By default, sim() is the dot-product.
-    For more details, please refer to https://arxiv.org/abs/2010.02666.
+    Compute the MSE loss between the |sim(Query, Pos) - sim(Query, Neg)| and |gold_sim(Q, Pos) - gold_sim(Query, Neg)|
+    By default, sim() is the dot-product
+    For more details, please refer to https://arxiv.org/abs/2010.02666
     """
     def __init__(self, model, similarity_fct = pairwise_dot_score, lambda_d=8e-2, lambda_q=1e-1):
         """
         :param model: SentenceTransformerModel
-        :param similarity_fct:  Which similarity function to use.
+        :param similarity_fct:  Which similarity function to use
         """
         super(MarginMSELossSplade, self).__init__()
         self.model = model
@@ -82,26 +82,17 @@ class MarginMSELossSplade(nn.Module):
 
 class MultipleNegativesRankingLossSplade(nn.Module):
     """
-        This loss expects as input a batch consisting of sentence pairs (a_1, p_1), (a_2, p_2)..., (a_n, p_n)
-        where we assume that (a_i, p_i) are a positive pair and (a_i, p_j) for i!=j a negative pair.
+        This loss expects as input a batch consisting of sentence pairs (a_1, p_1), (a_2, p_2), ..., (a_n, p_n)
+        where we assume that (a_i, p_i) are positive pairs and (a_i, p_j) for i!=j negative pairs.
         For each a_i, it uses all other p_j as negative samples, i.e., for a_i, we have 1 positive example (p_i) and
         n-1 negative examples (p_j). It then minimizes the negative log-likehood for softmax normalized scores.
         This loss function works great to train embeddings for retrieval setups where you have positive pairs (e.g. (query, relevant_doc))
-        as it will sample in each batch n-1 negative docs randomly.
-        The performance usually increases with increasing batch sizes.
+        as it will sample in each batch n-1 negative docs randomly. The performance usually increases with increasing batch sizes.
         For more information, see: https://arxiv.org/pdf/1705.00652.pdf
         (Efficient Natural Language Response Suggestion for Smart Reply, Section 4.4)
         You can also provide one or multiple hard negatives per anchor-positive pair by structering the data like this:
         (a_1, p_1, n_1), (a_2, p_2, n_2)
         Here, n_1 is a hard negative for (a_1, p_1). The loss will use for the pair (a_i, p_i) all p_j (j!=i) and all n_j as negatives.
-        Example::
-            from sentence_transformers import SentenceTransformer, losses, InputExample
-            from torch.utils.data import DataLoader
-            model = SentenceTransformer('distilbert-base-uncased')
-            train_examples = [InputExample(texts=['Anchor 1', 'Positive 1']),
-                InputExample(texts=['Anchor 2', 'Positive 2'])]
-            train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=32)
-            train_loss = losses.MultipleNegativesRankingLoss(model=model)
     """
     def __init__(self, model, scale: float = 1.0, similarity_fct = dot_score, lambda_d=0.0008, lambda_q=0.0006):
         """
@@ -117,8 +108,6 @@ class MultipleNegativesRankingLossSplade(nn.Module):
         self.lambda_d = lambda_d
         self.lambda_q = lambda_q
         self.FLOPS = FLOPS()
-
-
 
     def forward(self, sentence_features: Iterable[Dict[str, Tensor]], labels: Tensor):
         reps = [self.model(sentence_feature)['sentence_embedding'] for sentence_feature in sentence_features]
