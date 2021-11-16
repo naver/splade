@@ -4,7 +4,7 @@ This repository contains the weights for four models as well as the code for run
 * **[v1]**: **SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking**, *Thibault Formal*, *Benjamin Piwowarski* and *Stéphane Clinchant*. SIGIR21 short paper. [link](https://arxiv.org/abs/2107.05720)
 * **[v2]**: **SPLADE v2: Sparse Lexical and Expansion Model for Information Retrieval**, Thibault Formal, Benjamin Piwowarski, Carlos Lassance, and Stéphane Clinchant. arxiv. [link](https://arxiv.org/abs/2109.10086)
 
-We also provide some scripts to run evaluation on the [BEIR benchmark](https://github.com/UKPLab/beir) in the `beir_evaluation` folder.
+We also provide some scripts to run evaluation on the [BEIR benchmark](https://github.com/UKPLab/beir) in the `beir_evaluation` folder, as well as training code in the `training_with_sentence_transformers` folder. 
 
 **TL; DR**  
 Recently, dense retrieval with approximate nearest neighbors search based on BERT has demonstrated its strength for
@@ -63,7 +63,7 @@ By controlling lambda, we can adjust the trade-off.
 
 Requirements can be found in `requirements.txt`. *In order to get the weights, be sure to have git lfs installed.*
 
-## Main Results on MSMARCO (dev set) and TREC DL 2019 passage ranking
+## Main Results on MS MARCO (dev set) and TREC DL 2019 passage ranking
 
 - Below is a table of results comparing SPLADE to several competing baselines:
 
