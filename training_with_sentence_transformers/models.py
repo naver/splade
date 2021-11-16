@@ -19,7 +19,6 @@ class Splade_Pooling(nn.Module):
         return "Pooling Splade({})"
 
     def get_pooling_mode_str(self) -> str:
-
         return "Splade"
 
     def forward(self, features: Dict[str, Tensor]):
@@ -74,7 +73,7 @@ class MLMTransformer(nn.Module):
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name_or_path if tokenizer_name_or_path is not None else model_name_or_path, cache_dir=cache_dir, **tokenizer_args)
         self.pooling = torch.nn.DataParallel(Splade_Pooling(self.get_word_embedding_dimension())) 
         
-        #No max_seq_length set. Try to infer from model
+        # No max_seq_length set. Try to infer from model
         if max_seq_length is None:
             if hasattr(self.auto_model, "config") and hasattr(self.auto_model.config, "max_position_embeddings") and hasattr(self.tokenizer, "model_max_length"):
                 max_seq_length = min(self.auto_model.config.max_position_embeddings, self.tokenizer.model_max_length)
@@ -112,8 +111,7 @@ class MLMTransformer(nn.Module):
 
     def get_word_embedding_dimension(self) -> int:
             return self.auto_model.module.config.vocab_size
-
-
+        
     def tokenize(self, texts: Union[List[str], List[Dict], List[Tuple[str, str]]]):
         """
         Tokenizes a text and maps tokens to token-ids
@@ -143,10 +141,8 @@ class MLMTransformer(nn.Module):
         if self.do_lower_case:
             to_tokenize = [[s.lower() for s in col] for col in to_tokenize]
 
-
         output.update(self.tokenizer(*to_tokenize, padding=True, truncation='longest_first', return_tensors="pt", max_length=self.max_seq_length))
         return output
-
 
     def get_config_dict(self):
         return {key: self.__dict__[key] for key in self.config_keys}
