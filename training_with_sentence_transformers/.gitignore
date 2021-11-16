@@ -1,0 +1,8 @@
+.idea/
+*__pycache__
+.ipynb_checkpoints
+*.pkl
+output/
+msmarco-data/
+log/
+*.pyc
