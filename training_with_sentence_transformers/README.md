@@ -1,6 +1,6 @@
 # Training SPLADE on MS MARCO v1
 
-Minimalistic code for training DistilSPLADE-max models using the [sentence-bert framework](https://github.com/UKPLab/sentence-transformers/). We provide a file for training SPLADE (`train_max.py`) and one for training DistilSPLADE-max (`train_distill.py`). Distillation is done using the latest training data released by Nils Reimers (https://twitter.com/Nils_Reimers/status/1435544757388857345/photo/1). **Note that this is not exactly the code used in our papers**, and that we are not yet able to provide indexing/retrieve code (*but one could maybe use the beir-eval for that*), however results are very competitive with state of the art and with what we observed with SPLADE before.
+Minimalistic code for training DistilSPLADE-max models using the [sentence-bert framework](https://github.com/UKPLab/sentence-transformers/). **We provide a file for training SPLADE (or SPLADE-max) (`train_max.py`) and one for training DistilSPLADE-max (`train_distill.py`)**. Distillation is done using the latest training data released by Nils Reimers (https://twitter.com/Nils_Reimers/status/1435544757388857345/photo/1). **Note that this is not exactly the code used in our papers**, and that we are not yet able to provide indexing/retrieve code (*but one could maybe use the beir-eval for that*), however results are very competitive with state of the art and with what we observed with SPLADE before.
 
 ## Results
 
