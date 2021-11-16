@@ -26,7 +26,6 @@ logging.basicConfig(format='%(asctime)s - %(message)s',
                     handlers=[LoggingHandler()])
 #### /print debug information to stdout
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--train_batch_size", default=64, type=int)
 parser.add_argument("--max_seq_length", default=300, type=int)
@@ -36,7 +35,7 @@ parser.add_argument("--lambda_q", default=0.0006, type=float)
 parser.add_argument("--max_passages", default=0, type=int)
 parser.add_argument("--epochs", default=30, type=int)
 parser.add_argument("--pooling", default="mean")
-parser.add_argument("--negs_to_use", default=None, help="From which systems should negatives be used? Multiple systems seperated by comma. None = all")
+parser.add_argument("--negs_to_use", default=None, help="From which systems should negatives be used ? Multiple systems seperated by comma. None = all")
 parser.add_argument("--warmup_steps", default=1000, type=int)
 parser.add_argument("--lr", default=2e-5, type=float)
 parser.add_argument("--num_negs_per_system", default=5, type=int)
@@ -47,11 +46,11 @@ args = parser.parse_args()
 
 print(args)
 
-train_batch_size = args.train_batch_size           #Increasing the train batch size improves the model performance, but requires more GPU memory
-max_seq_length = args.max_seq_length            #Max length for passages. Increasing it, requires more GPU memory
-ce_score_margin = args.ce_score_margin             #Margin for the CrossEncoder score between negative and positive passages
-num_negs_per_system = args.num_negs_per_system         # We used different systems to mine hard negatives. Number of hard negatives to add from each system
-num_epochs = args.epochs                 # Number of epochs we want to train
+train_batch_size = args.train_batch_size
+max_seq_length = args.max_seq_length
+ce_score_margin = args.ce_score_margin  # Margin for the CrossEncoder score between negative and positive passages
+num_negs_per_system = args.num_negs_per_system  # We used different systems to mine hard negatives. Number of hard negatives to add from each system
+num_epochs = args.epochs  # Number of epochs we want to train
 
 logging.info("Create new SBERT model")
 word_embedding_model = models.MLMTransformer(args.model_name, max_seq_length=max_seq_length)
@@ -67,11 +66,11 @@ copyfile(__file__, train_script_path)
 with open(train_script_path, 'a') as fOut:
     fOut.write("\n\n# Script was called via:\n#python " + " ".join(sys.argv))
 
-### Now we read the MS Marco dataset
+### Now we read the MS MARCO dataset
 data_folder = 'msmarco-data'
 
-#### Read the corpus files, that contain all the passages. Store them in the corpus dict
-corpus = {}         #dict in the format: passage_id -> passage. Stores all existent passages
+#### Read the corpus file containing all the passages. Store them in the corpus dict
+corpus = {}         #dict in the format: passage_id -> passage. Stores all existing passages
 collection_filepath = os.path.join(data_folder, 'collection.tsv')
 if not os.path.exists(collection_filepath):
     tar_filepath = os.path.join(data_folder, 'collection.tar.gz')
@@ -89,7 +88,6 @@ with open(collection_filepath, 'r', encoding='utf8') as fIn:
         pid = int(pid)
         corpus[pid] = passage
 
-
 ### Read the train queries, store in queries dict
 queries = {}        #dict in the format: query_id -> query. Stores all training queries
 queries_filepath = os.path.join(data_folder, 'queries.train.tsv')
@@ -102,16 +100,14 @@ if not os.path.exists(queries_filepath):
     with tarfile.open(tar_filepath, "r:gz") as tar:
         tar.extractall(path=data_folder)
 
-
 with open(queries_filepath, 'r', encoding='utf8') as fIn:
     for line in tqdm.tqdm(fIn):
         qid, query = line.strip().split("\t")
         qid = int(qid)
         queries[qid] = query
 
-
 # Load a dict (qid, pid) -> ce_score that maps query-ids (qid) and paragraph-ids (pid)
-# to the CrossEncoder score computed by the cross-encoder/ms-marco-MiniLM-L-6-v2 model
+# to the CrossEncoder score computed by the cross-encoder-ms-marco-MiniLM-L-6-v2 model
 ce_scores_file = os.path.join(data_folder, 'cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl.gz')
 if not os.path.exists(ce_scores_file):
     logging.info("Download cross-encoder scores file")
@@ -126,7 +122,6 @@ hard_negatives_filepath = os.path.join(data_folder, 'msmarco-hard-negatives.json
 if not os.path.exists(hard_negatives_filepath):
     logging.info("Download cross-encoder scores file")
     util.http_get('https://huggingface.co/datasets/sentence-transformers/msmarco-hard-negatives/resolve/main/msmarco-hard-negatives.jsonl.gz', hard_negatives_filepath)
-
 
 logging.info("Read hard negatives train file")
 train_queries = {}
@@ -175,8 +170,7 @@ with gzip.open(hard_negatives_filepath, 'rt') as fIn:
 
 logging.info("Train queries: {}".format(len(train_queries)))
 
-
-# We create a custom MSMARCO dataset that returns triplets (query, positive, negative)
+# We create a custom MS MARCO dataset that returns triplets (query, positive, negative)
 # on-the-fly based on the information from the mined-hard-negatives jsonl file.
 class MSMARCODataset(Dataset):
     def __init__(self, queries, corpus):
@@ -218,8 +212,7 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
           use_amp=True,
           checkpoint_path=model_save_path,
           checkpoint_save_steps=len(train_dataloader),
-          optimizer_params = {'lr': args.lr},
-          )
+          optimizer_params = {'lr': args.lr})
 
-# Save the model
+# Save the latest model
 model.save(model_save_path)
