@@ -26,14 +26,13 @@ logging.basicConfig(format='%(asctime)s - %(message)s',
                     handlers=[LoggingHandler()])
 #### /print debug information to stdout
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--train_batch_size", default=64, type=int)
 parser.add_argument("--max_seq_length", default=256, type=int)
 parser.add_argument("--model_name", default="distilbert-base-uncased", type=str)
 parser.add_argument("--max_passages", default=0, type=int)
 parser.add_argument("--epochs", default=30, type=int)
-parser.add_argument("--negs_to_use", default=None, help="From which systems should negatives be used? Multiple systems seperated by comma. None = all")
+parser.add_argument("--negs_to_use", default=None, help="From which systems should negatives be used ? Multiple systems seperated by comma. None = all")
 parser.add_argument("--warmup_steps", default=1000, type=int)
 parser.add_argument("--lambda_d", default=0.08, type=float)
 parser.add_argument("--lambda_q", default=0.1, type=float)
@@ -48,7 +47,6 @@ train_batch_size = args.train_batch_size  # Increasing the train batch size gene
 model_name = args.model_name
 max_passages = args.max_passages
 max_seq_length = args.max_seq_length  # Max length for passages. Increasing it implies more GPU memory needed
-
 num_negs_per_system = args.num_negs_per_system  # We used different systems to mine hard negatives. Number of hard negatives to add from each system
 num_epochs = args.epochs  # Number of epochs we want to train
 
@@ -218,5 +216,5 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
           checkpoint_save_steps=10000,
           optimizer_params = {'lr': args.lr})
 
-# Save latest model
+# Save model
 model.save(model_save_path)
