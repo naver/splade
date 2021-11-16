@@ -21,7 +21,7 @@ for further improvements in this line of research.
 ## Updates
 
 * 24/09/2021: add the weights for v2 version of SPLADE (max pooling and margin-MSE distillation training) + add scripts to evaluate the model on the BEIR benchmark.
-* 22/10/2021: add code for training SPLADE using the Sentence Transformers framework + update LICENSE to properly include BEIR and Sentence Transformers information.
+* 16/11/2021: add code for training SPLADE using the Sentence Transformers framework + update LICENSE to properly include BEIR and Sentence Transformers.
 
 ## SPLADE
 
