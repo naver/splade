@@ -214,5 +214,5 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
           checkpoint_save_steps=len(train_dataloader),
           optimizer_params = {'lr': args.lr})
 
-# Save the latest model
+# Save the model
 model.save(model_save_path)
