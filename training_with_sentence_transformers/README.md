@@ -8,7 +8,7 @@ We provide results for various models (different init/training). MRR, R@1k and N
 
 |                                                              | MS MARCO |       | TREC-2019 |       | TREC-2020 |       |BEIR     |       |
 |-------------------------------------------------------------:|:-------:|:-----:|:---------:|:-----:|:---------:|:-----:|:-------:|:-----:|
-|                                                        Model |  MRR@10 |  R@1k |           |  R@1k |           |  R@1k | NDCG@10 |FLOPS  |
+|                                                        Model |  MRR@10 |  R@1k | NDCG@10          |  R@1k | NDCG@10          |  R@1k | NDCG@10 |FLOPS  |
 |                                                    **Baselines** |         |       |           |       |           |       |         |       |
 |        bert (sentence-transformers/msmarco-bert-base-dot-v5) |   38.1  |  -  |    71.9   |  -  |    72.3   |  -  | -     | N/A   |
 |        distilSplade v2                                       |   36.8  |  97.9 |    72.9   |  86.5 |    71.0   |  83.4 | 50.6    | 3.82  |
@@ -46,7 +46,7 @@ For ensembles, scores are normalized following [pyserini --normalization](https:
 
 |                                                              | MS MARCO |       | TREC-2019 |       | TREC-2020 |       |BEIR     |       |
 |-------------------------------------------------------------:|:-------:|:-----:|:---------:|:-----:|:---------:|:-----:|:-------:|:-----:|
-|                                                        Model |  MRR@10 |  R@1k |           |  R@1k |           |  R@1k | NDCG@10 |FLOPS  |
+|                                                        Model |  MRR@10 |  R@1k | NDCG@10          |  R@1k | NDCG@10          |  R@1k | NDCG@10 |FLOPS  |
 |                                                    **Baselines** |         |       |           |       |           |       |         |       |
 | distilbert (sentence-transformers/msmarco-distilbert-dot-v5) |   37.3  |  -  |    70.1   |  -  |    71.1   |  -  |         |       |
 |        bert (sentence-transformers/msmarco-bert-base-dot-v5) |   38.1  |  -  |    71.9   |  -  |    72.3   |  -  |         |       |
