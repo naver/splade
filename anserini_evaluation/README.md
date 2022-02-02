@@ -15,7 +15,7 @@ Also, you can check `evaluate_splade.sh` for a script that performs most of thes
 
 ### Environment
 
-There are many requirements for running both SPLADE and Anserini. We suggest the use of the conda environment described by `env.yml`, with a default name of Anserini, which can be installed by:
+There are many requirements for running both SPLADE and Anserini. We suggest the use of the conda environment described by `env.yml`, with a default name of `splade`, which can be installed by:
 
 ```
 conda env create -f env.yml
