@@ -1,14 +1,13 @@
 #!/bin/bash
-# This file performs splade evaluation, considering that the environment is already correct and that Anserini is installed in PATH ANSERINI. 
-# Also it will always download MSMARCO files and SPLADE weights, feel free to comment these lines if not needed.
-
+# This file performs SPLADE evaluation, considering that the environment is already correct and that Anserini is installed in PATH ANSERINI. 
+# Also it will always download MS MARCO files and SPLADE weights, feel free to comment these lines if not needed.
 
 ### Definitions
 
 ### ANSERINI (NEED TO SET PATH)
 export PATH_ANSERINI=SETPATH
 
-### MSMARCO
+### MS MARCO
 export URL_MSMARCO=https://msmarco.blob.core.windows.net/msmarcoranking/collectionandqueries.tar.gz
 export PATH_MSMARCO=msmarco/
 
@@ -18,23 +17,23 @@ export PATH_SPLADE_WEIGHTS=weights/
 export SPLADE_NAME=splade_distil_CoCodenser_large
 export PATH_SPLADE=$PATH_SPLADE_WEIGHTS/$SPLADE_NAME
 
-###COLLECTION
+### COLLECTION
 export SPLIT=16
 export INDEX_BATCH_SIZE=200
 export OUTPUT_COLLECTION_PATH=anserini_collection/$SPLADE_NAME
 
-###TOPIC
+### TOPIC
 export TOPIC_BATCH_SIZE=100
 export TOPIC_NAME=devset_msmarco
 export OUTPUT_TOPIC_PATH=topics/$SPLADE_NAME
 
-###INDEXING
+### INDEXING
 export INDEX_PATH=anserini_index/$SPLADE_NAME
 
-###QUERYING
+### QUERYING
 export RUN_OUTPUT=runs/
 
-## Download MSMARCO
+## Download MS MARCO
 
 curl -s $URL_MSMARCO --progress-bar --verbose | tar xvz -C $PATH_MSMARCO
 
@@ -47,6 +46,7 @@ curl -s $SPLADE_URL --progress-bar --verbose | tar xvz -C $PATH_SPLADE_WEIGHTS
 python create_anserini_collection.py --splade_weights_path $PATH_SPLADE --input_collection_path $PATH_MSMARCO/collection.tsv --output_collection_path $OUTPUT_COLLECTION_PATH --index_batch_size $INDEX_BATCH_SIZE --split $SPLIT
 
 ## 2. Create topics
+
 python create_anserini_topic.py --splade_weights_path $PATH_SPLADE --input_topic_path $PATH_MSMARCO/queries.dev.small.tsv --output_topic_path $OUTPUT_TOPIC_PATH --topic_batch_size $TOPIC_BATCH_SIZE --output_topic_name $TOPIC_NAME
 
 ## 3. Index with anserini
@@ -76,4 +76,3 @@ $PATH_MSMARCO/qrels.dev.small.trec $RUN_OUTPUT/$NAME.trec
 
 $PATH_ANSERINI/tools/eval/trec_eval.9.0.4/trec_eval -c -mrecall -mmap \
 $PATH_MSMARCO/qrels.dev.small.trec $RUN_OUTPUT/$NAME.trec
-
