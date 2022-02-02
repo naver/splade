@@ -1,27 +1,27 @@
-# Evaluating SPLADE on MSMARCO with Anserini
+# Evaluating SPLADE on MS MARCO with Anserini
 
 In this folder we make available the code for evaluating SPLADE with Anserini. This is an extension of the [Anserini documentation](https://github.com/castorini/anserini/blob/master/docs/experiments-msmarco-passage-splade-v2.md), with the addition of SPLADE inference, where the aforementioned documentation uses precomputed files. In the next paragraphs we will see:
 
 0. (OPTIONAL) Setup 
-1. Generating the document (jsonl) collection .
+1. Generating the document collection (jsonl)
 2. Generating the topics (query) files
-3. Indexing with anserini
-4. How to query the index. (and measure latency/QPS)
-5. Evaluating the results with pytrec
+3. Indexing with Anserini
+4. How to query the index (and measure latency/QPS)
+5. Evaluating the results with trec_eval
 
-Also, you can check evaluate_splade.sh for a script that performs most steps (safe for installing the environment and anserini). Finally, please notice that there are various licenses here (Anserini, MSMARCO, SPLADE...), so take this into consideration when using the code (notably that it should not be used in commercial applications).
+Also, you can check `evaluate_splade.sh` for a script that performs most steps (safe for installing the environment and anserini). Finally, please notice that there are various licenses here (Anserini, MS MARCO, SPLADE...), so take this into consideration when using the code (notably that it should not be used in commercial applications).
 
 ## (OPTIONAL) SETUP
 
 ### Environment
 
-There are many requirements for running both SPLADE and Anserini. We suggest the use of the conda environment described by env.yml, with a default name of anserini,that can be installed by:
+There are many requirements for running both SPLADE and Anserini. We suggest the use of the conda environment described by `env.yml`, with a default name of Anserini, which can be installed by:
 
 ```
 conda env create -f env.yml
 ```
 
-It can then be activated by
+It can then be activated by:
 
 ```
 conda activate splade
@@ -29,11 +29,11 @@ conda activate splade
 
 ### Anserini
 
-The first thing one needs to do is to install Anserini in your machine. [Please follow their guidelines](https://github.com/castorini/anserini). In the following we consider that the path to anserini is set to $PATH_ANSERINI
+The first thing one needs to do is to install Anserini. [Please follow their guidelines](https://github.com/castorini/anserini). In the following we consider that the path to anserini is set to `$PATH_ANSERINI`.
 
-### Download MSMARCO needed files
+### Download MS MARCO needed files
 
-The next step is to download all files related to MSMARCO (documents, development queries and development qrels). This can be done with the following commands:
+The next step is to download all files related to MS MARCO (documents, development queries and development qrels). This can be done with the following commands:
 
 ```
 PATH_MSMARCO=msmarco/
@@ -41,7 +41,7 @@ URL_MSMARCO=https://msmarco.blob.core.windows.net/msmarcoranking/collectionandqu
 curl -s $URL_MSMARCO | tar xvz -C $PATH_MSMARCO
 ```
 
-Note that MSMARCO is a **Non-Commercial** dataset, so that networks trained with it (such as most splade model), **cannot** be used in commercial applications.
+Note that MS MARCO is a **Non-Commercial** dataset, so that networks trained with it (such as most SPLADE model), **cannot** be used in commercial applications.
 
 ### Choose SPLADE weights
 
@@ -65,9 +65,9 @@ The next step is to choose which SPLADE weights you want to use. In this case yo
 | [splade_distil_CoCodenser_small](http://download-de.europe.naverlabs.com/Splade_Release_Jan22/splade_distil_CoCodenser_small.tar.gz)                    | 37.5            | 97.5 | 71.0      | 46.4           | 48.9        | **0.42**  | 2.0             | 83               |
 
 
-**Note on latency:**: QPS Values are computed on a Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz, with 128 threads. We simply take the total time (lets call it t) for query generation (step 2) on that CPU + the total time for Anserini retrieval. We then compute QPS= |Q|/t, where |Q| is the number of queries in the msmarco devset (6980).
+**Note on latency:**: QPS Values are computed on a Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz, with 128 threads. We simply take the total time (lets call it `t`) for query generation (step 2) on that CPU + the total time for Anserini retrieval. We then compute QPS= |Q|/t, where |Q| is the number of queries in the MS MARCO devset (6980).
 
-**Note on beir**: The BEIR dataset is composed of 18 datasets, of which 4 are not directly accessible (BioASQ, Signal1M, TREC-NEWS, Robust04) and 1 has a multiple-faceted evaluation (CQAdupstack). Removing these five datasets, leads us to the "13 dataset" category, some papers also remove NQ and scidocs, leading to the "11 dataset" category
+**Note on BEIR evaluation**: The BEIR dataset is composed of 18 datasets, of which 4 are not directly accessible (BioASQ, Signal1M, TREC-NEWS, Robust04), and 1 has a multiple-faceted evaluation (CQAdupstack). Removing these five datasets, leads us to the "13 datasets" category; some papers also remove NQ and scidocs, leading to the "11 datasets" category.
 
 The models not included in the repo can be downloaded and extracted as follows (example splade_distil_CoCodenser_small):
 
@@ -78,13 +78,13 @@ PATH_SPLADE_WEIGHTS=weights/
 curl -s $SPLADE_URL | tar xvz -C $PATH_SPLADE_WEIGHTS
 ```
 
-We then consider that the path to the SPLADE weights is set to variable $PATH_SPLADE, continuing the example:
+We then consider that the path to the SPLADE weights is set to the variable $PATH_SPLADE, continuing the example:
 
 ```
 PATH_SPLADE=$PATH_SPLADE_WEIGHTS/$SPLADE_NAME
 ```
 
-## 1. Generating the document (jsonl) collection .
+## 1. Generating the document (jsonl) collection
 
 Now that we have everything setup we may start. Considering everything respects the setup, you may generate the document collection via:
 
@@ -95,11 +95,9 @@ OUTPUT_COLLECTION_PATH=anserini_collection/$SPLADE_NAME
 python create_anserini_collection.py --splade_weights_path $PATH_SPLADE --input_collection_path $PATH_MSMARCO/collection.tsv --output_collection_path $OUTPUT_COLLECTION_PATH --index_batch_size $INDEX_BATCH_SIZE --split $SPLIT
 ```
 
-Where $SPLIT is the number of splits for the collection jsonl (to allow for multi-threaded indexing), $INDEX_BATCH_SIZE is the batch_size for indexing and $OUTPUT_COLLECTION_PATH. It takes around 16h on a T4 GPU to encode the entire MSMARCO collection.
+Where $SPLIT is the number of splits for the collection jsonl (to allow for multi-threaded indexing), $INDEX_BATCH_SIZE is the batch_size for indexing and $OUTPUT_COLLECTION_PATH. It takes around 16h on a T4 GPU to encode the entire MS MARCO collection.
 
 ## 2. Generating the topics (query) files
-
-Now that we have everything setup we may start. Considering everything respects the setup, you may generate the document collection via:
 
 ```
 TOPIC_BATCH_SIZE=100
@@ -109,7 +107,6 @@ python create_anserini_topic.py --splade_weights_path $PATH_SPLADE --input_topic
 ```
 
 Where $SPLIT is the number of splits for the collection jsonl (to allow for multi-threaded indexing), $INDEX_BATCH_SIZE is the batch_size for indexing and $OUTPUT_COLLECTION_PATH. If we want to measure latency, 
-
 
 ## 3. Indexing with anserini
 
@@ -124,7 +121,7 @@ sh $PATH_ANSERINI/target/appassembler/bin/IndexCollection -collection JsonVector
  -threads 16
 ```
 
-## 4. How to query the index. (and measure latency/QPS)
+## 4. How to query the index (and measure latency/QPS)
 
 With the index created, we can now query the index. We can do it in parallel (recommended) and thus measure QPS (queries per second, parallelism=number of cores) or do it sequentially (threads=1) to measure latency. 
 
@@ -137,9 +134,9 @@ sh $PATH_ANSERINI/target/appassembler/bin/SearchCollection -hits 1000 -paralleli
  -impact -pretokenized
 ```
 
-## 5. Evaluating the results with pytrec
+## 5. Evaluating the results with trec_eval
 
-Finally we can evaluate the results using pytrec. Here we do MAP, MRR@10 and Recall@k for various values of k. To do so, we first need to convert the qrels from msmarco format to trec format:
+Finally we can evaluate the results using trec_eval. Here we do MAP, MRR@10 and Recall@k for various values of k. To do so, we first need to convert the qrels from MS MARCO format to trec format:
 
 ```
 python $PATH_ANSERINI/tools/scripts/msmarco/convert_msmarco_to_trec_qrels.py \
@@ -152,7 +149,8 @@ And now we can run the evaluation
 
 ```
 $PATH_ANSERINI/tools/eval/trec_eval.9.0.4/trec_eval -c -M 10 -m recip_rank \
-$PATH_MSMARCO/qrels.dev.small.trec runs/level_$LEVEL/$NAME.trec
+$PATH_
+CO/qrels.dev.small.trec runs/level_$LEVEL/$NAME.trec
 
 $PATH_ANSERINI/tools/eval/trec_eval.9.0.4/trec_eval -c -mrecall -mmap \
 $PATH_MSMARCO/qrels.dev.small.trec runs/level_$LEVEL/$NAME.trec
