@@ -9,7 +9,7 @@ In this folder we make available the code for evaluating SPLADE with Anserini. T
 4. How to query the index (and measure latency/QPS)
 5. Evaluating the results with trec_eval
 
-Also, you can check `evaluate_splade.sh` for a script that performs most steps (safe for installing the environment and anserini). Finally, please notice that there are various licenses here (Anserini, MS MARCO, SPLADE...), so take this into consideration when using the code (notably that it should not be used in commercial applications).
+Also, you can check `evaluate_splade.sh` for a script that performs most of these steps (safe for installing the environment and anserini). Finally, please notice that there are various licenses here (Anserini, MS MARCO, SPLADE...), so take this into consideration when using the code (notably that it should not be used in commercial applications).
 
 ## (OPTIONAL) SETUP
 
@@ -29,7 +29,7 @@ conda activate splade
 
 ### Anserini
 
-The first thing one needs to do is to install Anserini. [Please follow their guidelines](https://github.com/castorini/anserini). In the following we consider that the path to anserini is set to `$PATH_ANSERINI`.
+The first thing one needs to do is to install Anserini. [Please follow their guidelines](https://github.com/castorini/anserini). In the following we consider that the path to Anserini is set to `$PATH_ANSERINI`.
 
 ### Download MS MARCO needed files
 
@@ -65,7 +65,7 @@ The next step is to choose which SPLADE weights you want to use. In this case yo
 | [splade_distil_CoCodenser_small](http://download-de.europe.naverlabs.com/Splade_Release_Jan22/splade_distil_CoCodenser_small.tar.gz)                    | 37.5            | 97.5 | 71.0      | 46.4           | 48.9        | **0.42**  | 2.0             | 83               |
 
 
-**Note on latency:**: QPS Values are computed on a Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz, with 128 threads. We simply take the total time (lets call it `t`) for query generation (step 2) on that CPU + the total time for Anserini retrieval. We then compute QPS= |Q|/t, where |Q| is the number of queries in the MS MARCO devset (6980).
+**Note on latency:**: QPS values are computed on a Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz, with 128 threads. We simply take the total time (lets call it `t`) for query generation (step 2) on that CPU + the total time for Anserini retrieval. We then compute QPS= |Q|/t, where |Q| is the number of queries in the MS MARCO devset (6980).
 
 **Note on BEIR evaluation**: The BEIR dataset is composed of 18 datasets, of which 4 are not directly accessible (BioASQ, Signal1M, TREC-NEWS, Robust04), and 1 has a multiple-faceted evaluation (CQAdupstack). Removing these five datasets, leads us to the "13 datasets" category; some papers also remove NQ and scidocs, leading to the "11 datasets" category.
 
@@ -142,7 +142,6 @@ Finally we can evaluate the results using trec_eval. Here we do MAP, MRR@10 and 
 python $PATH_ANSERINI/tools/scripts/msmarco/convert_msmarco_to_trec_qrels.py \
  --input $PATH_MSMARCO/qrels.dev.small.tsv \
  --output $PATH_MSMARCO/qrels.dev.small.trec
-
 ```
 
 And now we can run the evaluation
