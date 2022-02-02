@@ -1,0 +1,8 @@
+__pycache__/
+anserini_collection/*
+anserini_index/*
+logs/*
+msmarco/*
+runs/*
+topics/*
+weights/*
