@@ -106,7 +106,7 @@ OUTPUT_TOPIC_PATH=topics/$SPLADE_NAME
 python create_anserini_topic.py --splade_weights_path $PATH_SPLADE --input_topic_path $PATH_MSMARCO/queries.dev.small.tsv --output_topic_path $OUTPUT_TOPIC_PATH --topic_batch_size $TOPIC_BATCH_SIZE --output_topic_name $TOPIC_NAME
 ```
 
-Where $SPLIT is the number of splits for the collection jsonl (to allow for multi-threaded indexing), $INDEX_BATCH_SIZE is the batch_size for indexing and $OUTPUT_COLLECTION_PATH. If we want to measure latency, 
+Where $SPLIT is the number of splits for the collection jsonl (to allow for multi-threaded indexing), $INDEX_BATCH_SIZE is the batch_size for indexing and $OUTPUT_COLLECTION_PATH. If we want to measure latency, we should use TOPIC_BATCH_SIZE=1.
 
 ## 3. Indexing with anserini
 
