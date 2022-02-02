@@ -1,7 +1,7 @@
 import torch
 from tqdm.auto import tqdm
 from transformers import AutoModelForMaskedLM, AutoTokenizer
-import os
+
 
 class Splade(torch.nn.Module):
 
@@ -10,10 +10,10 @@ class Splade(torch.nn.Module):
         self.transformer = AutoModelForMaskedLM.from_pretrained(model_type_or_dir)
         assert agg in ("sum", "max")
         self.agg = agg
-    
+
     def forward(self, **kwargs):
         with torch.cuda.amp.autocast():
-            out = self.transformer(**kwargs)["logits"] # output (logits) of MLM head, shape (bs, pad_len, voc_size)
+            out = self.transformer(**kwargs)["logits"]  # output (logits) of MLM head, shape (bs, pad_len, voc_size)
             if self.agg == "max":
                 values, _ = torch.max(torch.log(1 + torch.relu(out)) * kwargs["attention_mask"].unsqueeze(-1), dim=1)
                 return values
@@ -21,7 +21,8 @@ class Splade(torch.nn.Module):
             else:
                 return torch.sum(torch.log(1 + torch.relu(out)) * kwargs["attention_mask"].unsqueeze(-1), dim=1)
 
-class CollectionDatasetPreLoad():
+
+class CollectionDatasetPreLoad:
     """
     dataset to iterate over a document/query collection, format per line: format per line: doc_id \t doc
     """
@@ -45,7 +46,6 @@ class CollectionDatasetPreLoad():
     def __len__(self):
         return self.nb_ex
 
-
     def __getitem__(self, idx):
         return self.line_dict[idx], self.data_dict[idx]
 
@@ -58,7 +58,6 @@ class DataLoader(torch.utils.data.dataloader.DataLoader):
 
     def collate_fn(self, batch):
         raise NotImplementedError("must implement this method")
-
 
     def collate_fn(self, batch):
         """
@@ -74,5 +73,3 @@ class DataLoader(torch.utils.data.dataloader.DataLoader):
         return {**{k: torch.tensor(v) for k, v in processed_passage.items()},
                 "id": torch.tensor([int(i) for i in id_], dtype=torch.long),
                 "text": d}
-
-
