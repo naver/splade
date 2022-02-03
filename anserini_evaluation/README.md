@@ -148,8 +148,7 @@ And now we can run the evaluation
 
 ```
 $PATH_ANSERINI/tools/eval/trec_eval.9.0.4/trec_eval -c -M 10 -m recip_rank \
-$PATH_
-CO/qrels.dev.small.trec runs/level_$LEVEL/$NAME.trec
+$PATH_MSMARCO/qrels.dev.small.trec runs/level_$LEVEL/$NAME.trec
 
 $PATH_ANSERINI/tools/eval/trec_eval.9.0.4/trec_eval -c -mrecall -mmap \
 $PATH_MSMARCO/qrels.dev.small.trec runs/level_$LEVEL/$NAME.trec
