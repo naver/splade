@@ -1,0 +1,10 @@
+# @package _global_
+
+data:
+  Q_COLLECTION_PATH: [data/msmarco/dev_queries]
+  EVAL_QREL_PATH: [data/msmarco/dev_qrel.json]
+
+config:
+  top_k: 1000
+  threshold: 0
+  eval_metric: [[mrr_10, recall]]

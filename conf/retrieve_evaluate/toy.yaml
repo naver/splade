@@ -1,0 +1,10 @@
+# @package _global_
+
+data:
+  Q_COLLECTION_PATH: [data/toy_data/dev_queries]
+  EVAL_QREL_PATH: [data/toy_data/qrel/qrel.json]
+
+config:
+  top_k: 5
+  threshold: 0.4
+  eval_metric: [[mrr_10, recall]]

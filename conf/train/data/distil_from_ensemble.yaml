@@ -1,0 +1,14 @@
+# @package data
+
+type: hard_negatives
+TRAIN:
+  DATASET_PATH: data/msmarco/hard_negatives_scores/cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl.gz
+  D_COLLECTION_PATH: data/msmarco/full_collection
+  Q_COLLECTION_PATH: data/msmarco/train_queries/queries
+  QREL_PATH: data/msmarco/train_queries/qrels.json
+
+VALIDATION_FULL_RANKING:
+  D_COLLECTION_PATH: data/msmarco/val_retrieval/collection
+  Q_COLLECTION_PATH: data/msmarco/val_retrieval/queries
+  QREL_PATH: data/msmarco/val_retrieval/qrel.json
+  TOP_K: 500

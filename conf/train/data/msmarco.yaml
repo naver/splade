@@ -1,0 +1,11 @@
+# @package data
+
+type: triplets
+
+TRAIN_DATA_DIR: data/msmarco/triplets
+VALIDATION_SIZE_FOR_LOSS: 60000
+VALIDATION_FULL_RANKING:
+  D_COLLECTION_PATH: data/msmarco/val_retrieval/collection
+  Q_COLLECTION_PATH: data/msmarco/val_retrieval/queries
+  QREL_PATH: data/msmarco/val_retrieval/qrel.json
+  TOP_K: 500

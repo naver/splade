@@ -1,0 +1,18 @@
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## TRAIN ###################################
+  - train/config: splade
+  - train/data: msmarco
+  - train/model: splade
+  ############## INDEX ###################################
+  - index: msmarco
+  ############## RETRIEVE ################################
+  - retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - flops: msmarco
+
+# Direct PARAMETER setting
+config: # to be provided for each run
+  checkpoint_dir: ???
+  index_dir: ???
+  out_dir: ???

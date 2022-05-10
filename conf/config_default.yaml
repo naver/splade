@@ -1,0 +1,19 @@
+# FILES
+defaults:  # (these specify which config FILES to use)
+  ############## TRAIN ###################################
+  - train/config: splade_toy
+  - train/data: toy
+  - train/model: splade
+  ############## INDEX ###################################
+  - index: toy
+  ############## RETRIEVE ################################
+  - retrieve_evaluate: toy
+  ############### FLOPS ##################################
+  - flops: toy
+
+# Direct PARAMETER setting
+config:  # to be provided for each run
+  checkpoint_dir: ???
+  index_dir: ???
+  out_dir: ???
+  fp16: false

@@ -1,0 +1,4 @@
+# @package _global_
+
+data:
+  flops_queries: data/toy_data/dev_queries

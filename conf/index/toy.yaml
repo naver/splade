@@ -1,0 +1,4 @@
+# @package _global_
+
+data:
+  COLLECTION_PATH: data/toy_data/full_collection

@@ -1,0 +1,28 @@
+# @package config
+
+lr: 2e-5
+seed: 123
+gradient_accumulation_steps: 1
+weight_decay: 0.01
+validation_metrics: [ MRR@10, recall@100, recall@200, recall@500 ]
+pretrained_no_yamlconfig: false
+nb_iterations: 10
+train_batch_size: 6  # number of gpus needs to divide this
+eval_batch_size: 8
+index_retrieve_batch_size: 6
+record_frequency: 3
+train_monitoring_freq: 2
+warmup_steps: 5
+max_length: 10
+fp16: false
+augment_pairs: in_batch_negatives
+matching_type: splade
+monitoring_ckpt: loss  # or e.g. MRR@10
+loss: InBatchPairwiseNLL
+regularizer:
+  FLOPS:
+    lambda_q: 5e-4
+    lambda_d: 3e-4
+    T: 3
+    targeted_rep: rep
+    reg: FLOPS
