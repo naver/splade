@@ -18,22 +18,22 @@ regularization. Sparse representations benefit from several advantages compared 
 inverted index, explicit lexical match, interpretability... They also seem to be better at generalizing on out-of-domain
 data (cf BEIR benchmark).
 
-* [v1]: **SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking**, *Thibault Formal*, *Benjamin Piwowarski*
-  and *Stéphane Clinchant*. SIGIR21 short paper. [link](https://arxiv.org/abs/2107.05720)
+* [v1, SPLADE] [SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking](https://arxiv.org/abs/2107.05720), *Thibault Formal*, *Benjamin Piwowarski*
+  and *Stéphane Clinchant*. SIGIR21 short paper.
 
 By benefiting from recent advances in training neural retrievers, our **v2** models rely on hard-negative mining,
 distillation and better Pre-trained Language Model initialization to further increase their effectiveness, on both
 in-domain (MS MARCO) and out-of-domain evaluation (BEIR benchmark).
 
-* [v2]: **SPLADE v2: Sparse Lexical and Expansion Model for Information Retrieval**, *Thibault Formal*, *Benjamin
-  Piwowarski*, *Carlos Lassance*, and *Stéphane Clinchant*. arxiv. [link](https://arxiv.org/abs/2109.10086)
-* [v2bis]: **From Distillation to Hard Negative Sampling: Making Sparse Neural IR Models More Effective**, *Thibault
-  Formal*, *Carlos Lassance*, *Benjamin Piwowarski*, and *Stéphane Clinchant*. SIGIR22 short paper. [link](TODO)
+* [v2, SPLADE v2] [SPLADE v2: Sparse Lexical and Expansion Model for Information Retrieval](https://arxiv.org/abs/2109.10086), *Thibault Formal*, *Benjamin
+  Piwowarski*, *Carlos Lassance*, and *Stéphane Clinchant*. arxiv.
+* [v2bis, SPLADE++] [From Distillation to Hard Negative Sampling: Making Sparse Neural IR Models More Effective](http://arxiv.org/abs/2205.04733), *Thibault
+  Formal*, *Carlos Lassance*, *Benjamin Piwowarski*, and *Stéphane Clinchant*. SIGIR22 short paper.
 
 Weights for models trained under various settings can be found
 on [Naver Labs Europe website](https://europe.naverlabs.com/research/machine-learning-and-optimization/splade-models/),
 as well as [Hugging Face](https://huggingface.co/naver). Please bear in mind that SPLADE is more a class of models
-rather than a model per se: depending on the regularization magnitude, we obtain very different models (from very sparse
+rather than a model per se: depending on the regularization magnitude, we can obtain very different models (from very sparse
 to models doing intense query/doc expansion) with different properties and performance.
 
 *splade: a spork that is sharp along one edge or both edges, enabling it to be used as a knife, a fork and a spoon.*
@@ -64,8 +64,8 @@ predicted "bag-of-expanded-words". We provide weights for four main models:
 | --- | --- |
 | `splade_max` (**v2**) | 34.0 |
 | `distilsplade_max` (**v2**) | 36.8 |
-| `naver/splade-cocondenser-selfdistil` (**v2bis**, [HF](https://huggingface.co/naver/splade-cocondenser-selfdistil)) | 37.6 | 
-| `naver/splade-cocondenser-ensembledistil` (**v2bis**, [HF](https://huggingface.co/naver/splade-cocondenser-ensembledistil)) | 38.3 |
+| `naver/splade-cocondenser-selfdistil` (**SPLADE++**, [HF](https://huggingface.co/naver/splade-cocondenser-selfdistil)) | 37.6 | 
+| `naver/splade-cocondenser-ensembledistil` (**SPLADE++**, [HF](https://huggingface.co/naver/splade-cocondenser-ensembledistil)) | 38.3 |
 
 We also uploaded various
 models [here](https://europe.naverlabs.com/research/machine-learning-and-optimization/splade-models/). Feel free to try
@@ -90,7 +90,7 @@ them out!
 
 To simplify setting up, we made available all our data folders, which can
 be [downloaded here](https://download.europe.naverlabs.com/splade/sigir22/data.tar.gz). This link includes queries,
-documents and hard negative data, allowing for training under the `EnsembleDistil` setting (see [v2 bis] paper). For
+documents and hard negative data, allowing for training under the `EnsembleDistil` setting (see [v2bis] paper). For
 other settings (`Simple`, `DistilMSE`, `SelfDistil`), you also have to download:
 
 * [(`Simple`) standard BM25 Triplets](https://download.europe.naverlabs.com/splade/sigir22/triplets.tar.gz)
@@ -120,7 +120,7 @@ python3 -m src.all \
 ### further examples
 
 We provide additional examples that can be plugged in the above code. See [conf/README.md](conf/README.md) for details
-on how to change experiments settings.
+on how to change experiment settings.
 
 * you can similarly run training `python3 -m src.train` (same for indexing or retrieval)
 * to create Anserini readable files (after training),
@@ -157,7 +157,7 @@ python3 -m src.retrieve \
 # pretrained_no_yamlconfig indicates that we solely rely on a HF-valid model path
 ``` 
 
-* To change the data, simply override the hydra retrieve_evaluate package: `retrieve_evaluate=msmarco`
+* To change the data, simply override the hydra retrieve_evaluate package, e.g. add `retrieve_evaluate=msmarco` as argument of `src.retrieve`.
 
 You can similarly build the files that will be ingested by Anserini:
 
@@ -172,8 +172,7 @@ python3 -m src.create_anserini \
 
 It will create the json collection (`docs_anserini.jsonl`) as well as the queries (`queries_anserini.tsv`) that are
 needed for Anserini. You then just need to follow the regression for
-SPLADE [here](https://github.com/castorini/anserini/blob/master/docs/regressions-msmarco-passage-distill-splade-max.md))
-.
+SPLADE [here](https://github.com/castorini/anserini/blob/master/docs/regressions-msmarco-passage-distill-splade-max.md) in order to index and retrieve.
 
 ### BEIR eval
 
@@ -230,11 +229,26 @@ numpages = {5}
 }
 ```
 
-* [v2bis] SIGIR22 short paper
+* [v2bis] SPLADE++, SIGIR22 short paper
 
-*TODO*
+```
+@misc{https://doi.org/10.48550/arxiv.2205.04733,
+  doi = {10.48550/ARXIV.2205.04733},
+  url = {https://arxiv.org/abs/2205.04733},
+  author = {Formal, Thibault and Lassance, Carlos and Piwowarski, Benjamin and Clinchant, Stéphane},
+  keywords = {Information Retrieval (cs.IR), Computation and Language (cs.CL), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  title = {From Distillation to Hard Negative Sampling: Making Sparse Neural IR Models More Effective},
+  publisher = {arXiv},
+  year = {2022},
+  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}
+}
+```
 
 ***
+
+# Contact
+
+Feel free to contact us via [Twitter](https://twitter.com/thibault_formal) or by mail @ thibault.formal@naverlabs.com !
 
 # License
 
