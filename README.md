@@ -144,7 +144,7 @@ or [Anserini](https://github.com/castorini/anserini). Let's perform these steps 
 ```bash
 conda activate splade_env
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-export SPLADE_CONFIG_FULLPATH="config_default.yaml"
+export SPLADE_CONFIG_NAME="config_splade++_cocondenser_ensembledistil"
 python3 -m src.index \
   init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
   config.pretrained_no_yamlconfig=true \
