@@ -90,7 +90,7 @@ def get_dataset_name(path):
         return "TREC_DL_2019"
     elif "trec2020" in path or "TREC_DL_2020" in path:
         return "TREC_DL_2020"
-    elif "MSMARCO" in path:
+    elif "msmarco" in path:
         if "train_queries" in path:
             return "MSMARCO_TRAIN"
         else:
