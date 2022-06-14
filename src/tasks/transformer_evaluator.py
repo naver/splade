@@ -28,7 +28,7 @@ class SparseIndexing(Evaluator):
         if self.compute_stats:
             self.l0 = L0()
 
-    def index(self, collection_loader):
+    def index(self, collection_loader, id_dict=None):
         doc_ids = []
         if self.compute_stats:
             stats = defaultdict(float)
@@ -46,6 +46,8 @@ class SparseIndexing(Evaluator):
                 data = batch_documents[row, col]
                 row = row + count
                 batch_ids = to_list(batch["id"])
+                if id_dict:
+                    batch_ids = [id_dict[x] for x in batch_ids]
                 count += len(batch_ids)
                 doc_ids.extend(batch_ids)
                 self.sparse_index.add_batch_document(row.cpu().numpy(), col.cpu().numpy(), data.cpu().numpy(),
