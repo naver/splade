@@ -13,7 +13,7 @@ from src.losses.regularization import init_regularizer, RegWeightScheduler
 from src.models.models_utils import get_model
 from src.optim.bert_optim import init_simple_bert_optim
 from src.tasks.transformer_evaluator import SparseApproxEvalWrapper
-from src.tasks.transformer_trainer import SiameseTransformerTrainer
+from src.tasks.transformer_trainer import SiameseTransformerTrainer, SiameseTransformerAdapterTrainer
 from src.utils.utils import set_seed, restore_model, get_initialize_config, get_loss, set_seed_from_config
 
 
@@ -182,11 +182,20 @@ def train(exp_dict: DictConfig):
     # # TRAIN
     # #################################################################
     print("+++++ BEGIN TRAINING +++++")
-    trainer = SiameseTransformerTrainer(model=model, iterations=iterations, loss=loss, optimizer=optimizer,
+    if "adapter_name" in init_dict.keys():
+        trainer = SiameseTransformerAdapterTrainer(model=model, iterations=iterations, loss=loss, optimizer=optimizer,
+                                        config=config, scheduler=scheduler,
+                                        train_loader=train_loader, validation_loss_loader=val_loss_loader,
+                                        validation_evaluator=val_evaluator,
+                                        regularizer=regularizer, adapter_names=init_dict["adapter_name"])
+    else:
+        trainer = SiameseTransformerTrainer(model=model, iterations=iterations, loss=loss, optimizer=optimizer,
                                         config=config, scheduler=scheduler,
                                         train_loader=train_loader, validation_loss_loader=val_loss_loader,
                                         validation_evaluator=val_evaluator,
                                         regularizer=regularizer)
+    
+    
     trainer.train()
 
 
