@@ -65,6 +65,20 @@ def remove_old_ckpt(dir_, k):
         print("REMOVE", os.path.join(dir_, "model_ckpt_{}.tar".format(oldest)))
         os.remove(os.path.join(dir_, "model_ckpt_{}.tar".format(oldest)))
 
+def remove_old_ckpt_adapters(dir_, k):
+    import shutil
+    ckpt_names = os.listdir(dir_)
+    if len(ckpt_names) <= k:
+        pass
+    else:
+        ckpt_names.remove("model_last")
+        #ckpt_names.remove("model_final_checkpoint")
+        steps = []
+        for ckpt_name in ckpt_names:
+            steps.append(int(ckpt_name.split("_")[-1]))
+        oldest = sorted(steps)[0]
+        print("REMOVE", os.path.join(dir_, f"model_ckpt_{oldest} directory"))
+        shutil.rmtree(os.path.join(dir_, f"model_ckpt_{oldest}"))
 
 def generate_bow(input_ids, output_dim, device, values=None):
     """from a batch of input ids, generates batch of bow rep
