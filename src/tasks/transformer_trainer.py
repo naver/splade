@@ -291,6 +291,10 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
         model = self.model.module if hasattr(self.model, "module") else self.model  # when using DataParallel
         if isinstance(model.transformer_rep.transformer, PreTrainedModel):
             model.transformer_rep.transformer.train_adapter(model.transformer_rep.transformer.active_adapters)
+            print("Printing model backprop:")
+            for n, v in model.transformer_rep.transformer.named_parameters():
+                print(n, v.shape, v.requires_grad)
+            print()
             if model.transformer_rep.transformer.active_adapters:
                 # Check if training AdapterFusion
                 self.train_adapter_fusion = (

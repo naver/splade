@@ -2,6 +2,8 @@ from abc import ABC
 from genericpath import exists
 from typing import Dict, List, Optional, Tuple, Union
 import os
+
+#from pkg_resources import LegacyVersion
 import torch
 from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel
 
@@ -35,10 +37,6 @@ class TransformerRep(torch.nn.Module):
         if adapter_name:
             # for adapter evalutation
             self.initialize_adapters(adapter_name=adapter_name, adapter_config=adapter_config, **kwargs)
-        #if adapter_: # for adapter eval
-        #    self.initialize_adapters(adapter_name=,
-        #                            adapter_config=
-        #                            **kwargs)
 
     def forward(self, **tokens):
         with torch.cuda.amp.autocast() if self.fp16 else NullContextManager():
@@ -60,11 +58,12 @@ class TransformerRep(torch.nn.Module):
     def initialize_adapters(self, adapter_name: str,
                            adapter_config: Union[str, AdapterConfig] = None,
                            **kwargs):
+            leave_out = kwargs.get('leave_out', "")
             if isinstance(adapter_config, str):
                 if adapter_config.lower() == "houlsby":
-                    config = HoulsbyConfig()
+                    config = HoulsbyConfig(leave_out=list(map(int, leave_out.strip().split())))
                 elif adapter_config.lower() == "pfeiffer":
-                    config = PfeifferConfig()
+                    config = PfeifferConfig(leave_out=list(map(int, leave_out.strip().split())))
                 else:
                     raise ValueError('Adapter Config can be of type: houlsby, pfeiffer.')
             elif isinstance(adapter_config, AdapterConfig):
@@ -94,11 +93,13 @@ class TransformerRep(torch.nn.Module):
                                        inv_adapter=inv_adapter,
                                        inv_adapter_reduction_factor=inv_adapter_reduction_factor,
                                        cross_adapter=cross_adapter,
+                                       leave_out=leave_out
                                        )
             if os.path.isdir(adapter_name): # from local directory/ evaluation
                 adapter_name = self.transformer.load_adapter(adapter_name)
-            else: # adapter training
+            else: # add new adapters
                 self.transformer.add_adapter(adapter_name, config=config)
+                #self.transformer.train_adapter(adapter_name)
             self.transformer.set_active_adapters(adapter_name)
             """
             if adapter_config: # add new adapter for training
@@ -118,10 +119,12 @@ class SiameseBase(torch.nn.Module, ABC):
         self.cosine = True if match == "cosine_sim" else False
         self.match = match
         self.fp16 = fp16
+        # Adapter args
         adapter_name_rep = kwargs.get("adapter_name") + "_rep" if kwargs.get("adapter_name", None) else None
         adapter_name_rep_q = kwargs.get("adapter_name") + "rep_q" if os.path.exists(kwargs.get("adapter_name") + "rep_q") or kwargs.get("adapter_name_or_path", None) else None
         kwargs.pop("adapter_name") 
         print("adapter_name_rep", adapter_name_rep)
+        
         self.transformer_rep = TransformerRep(model_type_or_dir, output, fp16, adapter_name=adapter_name_rep, **kwargs)
         self.transformer_rep_q = TransformerRep(model_type_or_dir_q,
                                                 output, fp16, adapter_name=adapter_name_rep_q, **kwargs) if model_type_or_dir_q is not None else None
