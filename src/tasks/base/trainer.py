@@ -66,8 +66,7 @@ class BaseTrainer:
                 self.saver = ValidationSaver(loss=True if self.config["monitoring_ckpt"] == "loss" else False)
                 self.val_decision = "loss" if self.config["monitoring_ckpt"] == "loss" else self.config[
                     "monitoring_ckpt"]
-        self.overwrite_final = config["monitoring_ckpt"]["overwrite_final"] if "overwrite_final" in config[
-            "monitoring_ckpt"] else False
+        self.overwrite_final = config["overwrite_final"] if "overwrite_final" in config else False
         self.training_res_handler = open(os.path.join(self.checkpoint_dir, "training_perf.txt"), "a")
         # => text file in which we record some training perf
         if self.validation:
