@@ -1,0 +1,26 @@
+# @package _global_
+
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## INDEX ###################################
+  - ../index: msmarco
+  ############## RETRIEVE ################################
+  - ../retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - ../flops: msmarco
+
+# Direct PARAMETER setting
+config:
+  checkpoint_dir: models/hf/V/large/checkpoint
+  index_dir:  models/hf/V/large/index
+  out_dir:  models/hf/V/large/out
+  pretrained_no_yamlconfig: true
+  tokenizer_type: naver/efficient-splade-V-large-doc
+  index_batch_size: 500
+  eval_batch_size: 500
+init_dict:
+  model_type_or_dir: naver/efficient-splade-V-large-doc
+  model_type_or_dir_q: naver/efficient-splade-V-large-query
+  freeze_d_model: 0
+  agg: max
+  fp16: true
