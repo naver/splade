@@ -40,7 +40,6 @@ pisa/build/bin/evaluate_queries \
 
 python -m pyserini.eval.trec_eval -c -M 10 -m recip_rank msmarco-passage-dev-subset ${level}_${size}.trec
 python -m pyserini.eval.trec_eval -c -mrecall msmarco-passage-dev-subset ${level}_${size}.trec
-
 ```
 
 ## Step 3 - Run mono-batch mono-cpu retrieval to get average latency
@@ -59,6 +58,4 @@ pisa/build/bin/queries \
                             --scorer quantized \
                             --weighted \
                             --queries queries/$level/$size.pisa.ints
-
 ```
-
