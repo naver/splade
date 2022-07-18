@@ -10,7 +10,7 @@ setup(
     url='https://github.com/naver/splade',
     classifiers=[
         'Intended Audience :: Science/Research',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
     packages=['splade'] + ['splade.' + i for i in find_packages('splade')],
