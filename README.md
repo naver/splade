@@ -118,7 +118,7 @@ In order to perform all steps (here on toy data, i.e. `config_default.yaml`), go
 conda activate splade_env
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 export SPLADE_CONFIG_NAME="config_default.yaml"
-python3 -m src.all \
+python3 -m splade.all \
   config.checkpoint_dir=experiments/debug/checkpoint \
   config.index_dir=experiments/debug/index \
   config.out_dir=experiments/debug/out
@@ -129,14 +129,14 @@ python3 -m src.all \
 We provide additional examples that can be plugged in the above code. See [conf/README.md](conf/README.md) for details
 on how to change experiment settings.
 
-* you can similarly run training `python3 -m src.train` (same for indexing or retrieval)
+* you can similarly run training `python3 -m splade.train` (same for indexing or retrieval)
 * to create Anserini readable files (after training),
-  run `SPLADE_CONFIG_FULLPATH=/path/to/checkpoint/dir/config.yaml python3 -m src.create_anserini +quantization_factor_document=100 +quantization_factor_query=100`
+  run `SPLADE_CONFIG_FULLPATH=/path/to/checkpoint/dir/config.yaml python3 -m splade.create_anserini +quantization_factor_document=100 +quantization_factor_query=100`
 * config files for various settings (distillation etc.) are available in `/conf`. For instance, to run the `SelfDistil`
   setting:
     * change to `SPLADE_CONFIG_NAME=config_splade++_selfdistil.yaml`
     * to further change parameters (e.g. lambdas) *outside* the config,
-      run: `python3 -m src.all config.regularizer.FLOPS.lambda_q=0.06 config.regularizer.FLOPS.lambda_d=0.02`
+      run: `python3 -m splade.all config.regularizer.FLOPS.lambda_q=0.06 config.regularizer.FLOPS.lambda_d=0.02`
 
 We provide several base configurations which correspond to the experiments in the v2bis and "efficiency" papers. Please note that these are
 suited for our hardware setting, i.e. 4 GPUs Tesla V100 with 32GB memory. In order to train models with e.g. one GPU,
@@ -153,11 +153,11 @@ or [Anserini](https://github.com/castorini/anserini). Let's perform these steps 
 conda activate splade_env
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 export SPLADE_CONFIG_NAME="config_splade++_cocondenser_ensembledistil"
-python3 -m src.index \
+python3 -m splade.index \
   init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
   config.pretrained_no_yamlconfig=true \
   config.index_dir=experiments/pre-trained/index
-python3 -m src.retrieve \
+python3 -m splade.retrieve \
   init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
   config.pretrained_no_yamlconfig=true \
   config.index_dir=experiments/pre-trained/index \
@@ -165,12 +165,12 @@ python3 -m src.retrieve \
 # pretrained_no_yamlconfig indicates that we solely rely on a HF-valid model path
 ``` 
 
-* To change the data, simply override the hydra retrieve_evaluate package, e.g. add `retrieve_evaluate=msmarco` as argument of `src.retrieve`.
+* To change the data, simply override the hydra retrieve_evaluate package, e.g. add `retrieve_evaluate=msmarco` as argument of `splade.retrieve`.
 
 You can similarly build the files that will be ingested by Anserini:
 
 ```bash
-python3 -m src.create_anserini \
+python3 -m splade.create_anserini \
   init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
   config.pretrained_no_yamlconfig=true \
   config.index_dir=experiments/pre-trained/index \
@@ -192,7 +192,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 export SPLADE_CONFIG_FULLPATH="/path/to/checkpoint/dir/config.yaml"
 for dataset in arguana fiqa nfcorpus quora scidocs scifact trec-covid webis-touche2020 climate-fever dbpedia-entity fever hotpotqa nq
 do
-    python3 -m src.beir_eval \
+    python3 -m splade.beir_eval \
       +beir.dataset=$dataset \
       +beir.dataset_path=data/beir \
       config.index_retrieve_batch_size=100
