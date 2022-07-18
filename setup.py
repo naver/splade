@@ -13,10 +13,11 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
-    packages=['splade'],
+    packages=['splade'] + ['splade.' + i for i in find_packages('splade')],
     license="Creative Commons Attribution-NonCommercial-ShareAlike",
     long_description=readme,
     install_requires=[
-        'transformers==4.18.0', 
+        'transformers==4.18.0',
+        'omegaconf==2.1.2' 
     ],
 )

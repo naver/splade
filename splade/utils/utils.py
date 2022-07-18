@@ -5,9 +5,8 @@ import numpy as np
 import torch
 from omegaconf import DictConfig, OmegaConf
 
-from src.losses.pairwise import DistilKLLoss, PairwiseNLL, DistilMarginMSE, InBatchPairwiseNLL
-from src.losses.pointwise import BCEWithLogitsLoss
-from src.utils.hydra import hydra_chdir
+from ..losses.pairwise import DistilKLLoss, PairwiseNLL, DistilMarginMSE, InBatchPairwiseNLL
+from ..losses.pointwise import BCEWithLogitsLoss
 
 
 def parse(d, name):
@@ -108,6 +107,8 @@ def get_dataset_name(path):
 
 
 def get_initialize_config(exp_dict: DictConfig, train=False):
+    # delay import to reduce dependencies
+    from ..utils.hydra import hydra_chdir
     hydra_chdir(exp_dict)
     exp_dict["init_dict"]["fp16"] = exp_dict["config"].get("fp16", False)
     config = exp_dict["config"]

@@ -6,15 +6,15 @@ from omegaconf import DictConfig, open_dict
 from torch.utils import data
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from src.datasets.dataloaders import CollectionDataLoader, SiamesePairsDataLoader, DistilSiamesePairsDataLoader
-from src.datasets.datasets import PairsDatasetPreLoad, DistilPairsDatasetPreLoad, MsMarcoHardNegatives, \
+from .datasets.dataloaders import CollectionDataLoader, SiamesePairsDataLoader, DistilSiamesePairsDataLoader
+from .datasets.datasets import PairsDatasetPreLoad, DistilPairsDatasetPreLoad, MsMarcoHardNegatives, \
     CollectionDatasetPreLoad
-from src.losses.regularization import init_regularizer, RegWeightScheduler
-from src.models.models_utils import get_model
-from src.optim.bert_optim import init_simple_bert_optim
-from src.tasks.transformer_evaluator import SparseApproxEvalWrapper
-from src.tasks.transformer_trainer import SiameseTransformerTrainer
-from src.utils.utils import set_seed, restore_model, get_initialize_config, get_loss, set_seed_from_config
+from .losses.regularization import init_regularizer, RegWeightScheduler
+from .models.models_utils import get_model
+from .optim.bert_optim import init_simple_bert_optim
+from .tasks.transformer_evaluator import SparseApproxEvalWrapper
+from .tasks.transformer_trainer import SiameseTransformerTrainer
+from .utils.utils import set_seed, restore_model, get_initialize_config, get_loss, set_seed_from_config
 
 
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)

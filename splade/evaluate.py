@@ -5,8 +5,8 @@ import hydra
 from omegaconf import DictConfig
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from src.evaluation.eval import load_and_evaluate
-from src.utils.utils import get_dataset_name
+from .evaluation.eval import load_and_evaluate
+from .utils.utils import get_dataset_name
 
 
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)

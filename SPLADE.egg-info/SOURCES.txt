@@ -1,0 +1,16 @@
+LICENSE
+README.md
+setup.py
+SPLADE.egg-info/PKG-INFO
+SPLADE.egg-info/SOURCES.txt
+SPLADE.egg-info/dependency_links.txt
+SPLADE.egg-info/requires.txt
+SPLADE.egg-info/top_level.txt
+splade/all.py
+splade/beir_eval.py
+splade/create_anserini.py
+splade/evaluate.py
+splade/flops.py
+splade/index.py
+splade/retrieve.py
+splade/train.py

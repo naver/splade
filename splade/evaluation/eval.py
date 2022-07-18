@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from src.utils.metrics import mrr_k, evaluate
+from ..utils.metrics import mrr_k, evaluate
 
 
 def load_and_evaluate(qrel_file_path, run_file_path, metric):

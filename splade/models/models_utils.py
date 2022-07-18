@@ -1,6 +1,6 @@
 from omegaconf import DictConfig
 
-from src.models.transformer_rep import Splade, SpladeDoc
+from ..models.transformer_rep import Splade, SpladeDoc
 
 
 def get_model(config: DictConfig, init_dict: DictConfig):

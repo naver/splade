@@ -6,7 +6,7 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 from transformers import AutoTokenizer
 
-from src.utils.utils import rename_keys
+from ..utils.utils import rename_keys
 
 
 class DataLoaderWrapper(DataLoader):
