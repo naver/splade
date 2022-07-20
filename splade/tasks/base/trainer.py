@@ -7,9 +7,9 @@ import torch
 from omegaconf import open_dict
 from torch.utils.tensorboard import SummaryWriter
 
-from src.tasks.base.early_stopping import EarlyStopping
-from src.tasks.base.saver import ValidationSaver
-from src.utils.utils import makedir, remove_old_ckpt
+from .early_stopping import EarlyStopping
+from .saver import ValidationSaver
+from ...utils.utils import makedir, remove_old_ckpt
 
 
 class BaseTrainer:
