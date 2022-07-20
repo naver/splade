@@ -2,7 +2,7 @@ import hydra
 from omegaconf import DictConfig
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from datasets.dataloaders import CollectionDataLoader
+from .datasets.dataloaders import CollectionDataLoader
 from .datasets.datasets import CollectionDatasetPreLoad
 from .models.models_utils import get_model
 from .tasks.transformer_evaluator import SparseIndexing
