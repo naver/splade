@@ -2,7 +2,7 @@ import os
 
 import torch
 
-from src.utils.utils import restore_model
+from ...utils.utils import restore_model
 
 
 class Evaluator:
