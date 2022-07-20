@@ -244,15 +244,22 @@ numpages = {5}
 * (v2bis) SPLADE++, SIGIR22 short paper
 
 ```
-@misc{https://doi.org/10.48550/arxiv.2205.04733,
-  doi = {10.48550/ARXIV.2205.04733},
-  url = {https://arxiv.org/abs/2205.04733},
-  author = {Formal, Thibault and Lassance, Carlos and Piwowarski, Benjamin and Clinchant, Stéphane},
-  keywords = {Information Retrieval (cs.IR), Computation and Language (cs.CL), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {From Distillation to Hard Negative Sampling: Making Sparse Neural IR Models More Effective},
-  publisher = {arXiv},
-  year = {2022},
-  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}
+@inproceedings{10.1145/3477495.3531857,
+author = {Formal, Thibault and Lassance, Carlos and Piwowarski, Benjamin and Clinchant, St\'{e}phane},
+title = {From Distillation to Hard Negative Sampling: Making Sparse Neural IR Models More Effective},
+year = {2022},
+isbn = {9781450387323},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3477495.3531857},
+doi = {10.1145/3477495.3531857},
+abstract = {Neural retrievers based on dense representations combined with Approximate Nearest Neighbors search have recently received a lot of attention, owing their success to distillation and/or better sampling of examples for training -- while still relying on the same backbone architecture. In the meantime, sparse representation learning fueled by traditional inverted indexing techniques has seen a growing interest, inheriting from desirable IR priors such as explicit lexical matching. While some architectural variants have been proposed, a lesser effort has been put in the training of such models. In this work, we build on SPLADE -- a sparse expansion-based retriever -- and show to which extent it is able to benefit from the same training improvements as dense models, by studying the effect of distillation, hard-negative mining as well as the Pre-trained Language Model initialization. We furthermore study the link between effectiveness and efficiency, on in-domain and zero-shot settings, leading to state-of-the-art results in both scenarios for sufficiently expressive models.},
+booktitle = {Proceedings of the 45th International ACM SIGIR Conference on Research and Development in Information Retrieval},
+pages = {2353–2359},
+numpages = {7},
+keywords = {neural networks, indexing, sparse representations, regularization},
+location = {Madrid, Spain},
+series = {SIGIR '22}
 }
 ```
 
@@ -272,7 +279,7 @@ abstract = {Latency and efficiency issues are often overlooked when evaluating I
 booktitle = {Proceedings of the 45th International ACM SIGIR Conference on Research and Development in Information Retrieval},
 pages = {2220–2226},
 numpages = {7},
-keywords = {splade, latency, information retrieval, sparse representations},
+keywords = {splade, sparse representations, latency, information retrieval},
 location = {Madrid, Spain},
 series = {SIGIR '22}
 }

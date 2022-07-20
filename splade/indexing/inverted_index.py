@@ -14,7 +14,7 @@ from tqdm.auto import tqdm
 
 
 class IndexDictOfArray:
-    def __init__(self, index_path=None, force_new=True, filename="array_index.h5py", dim_voc=None):
+    def __init__(self, index_path=None, force_new=False, filename="array_index.h5py", dim_voc=None):
         if index_path is not None:
             self.index_path = index_path
             if not os.path.exists(index_path):
