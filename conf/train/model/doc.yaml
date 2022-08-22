@@ -1,0 +1,11 @@
+# @package _global_
+
+init_dict:
+  model_type_or_dir: models/mlm_flops/DistilBERT
+  model_type_or_dir_q: null
+  freeze_d_model: 0
+  agg: max
+  fp16: true
+
+config:
+  tokenizer_type: models/mlm_flops/DistilBERT

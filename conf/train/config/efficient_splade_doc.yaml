@@ -1,0 +1,20 @@
+# @package config
+
+lr: 2e-5
+seed: 123
+gradient_accumulation_steps: 1
+weight_decay: 0.01
+validation_metrics: [ MRR@10, recall@100, recall@200, recall@500 ]
+pretrained_no_yamlconfig: false
+nb_iterations: 50000
+train_batch_size: 128  # number of gpus needs to divide this
+eval_batch_size: 600
+index_retrieve_batch_size: 500
+record_frequency: 10000
+train_monitoring_freq: 500
+warmup_steps: 6000
+max_length: 256
+fp16: true
+matching_type: splade_doc
+monitoring_ckpt: MRR@10  # or e.g. MRR@10
+overwrite_final: true
