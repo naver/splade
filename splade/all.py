@@ -2,12 +2,12 @@ import hydra
 from omegaconf import DictConfig
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from .flops import flops
-from .index import index
-from .retrieve import retrieve_evaluate
-from .train import train
-from .utils.hydra import hydra_chdir
-from .utils.index_figure import index_figure
+from splade.flops import flops
+from splade.index import index
+from splade.retrieve import retrieve_evaluate
+from splade.train import train
+from splade.utils.hydra import hydra_chdir
+from splade.utils.index_figure import index_figure
 
 
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)

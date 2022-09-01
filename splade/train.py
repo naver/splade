@@ -34,18 +34,29 @@ def train(exp_dict: DictConfig):
     ################################################################
     iterations = (1, config["nb_iterations"] + 1)  # tuple with START and END
     regularizer = None
-    if os.path.exists(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar")):
+    # load only adapters if adapter-tuning 
+    if 'adapter_name' in init_dict and os.path.exists(os.path.join(config["checkpoint_dir"],f"model_ckpt/model_last/{init_dict['adapter_name']}_rep")):
         print("@@@@ RESUMING TRAINING @@@")
         print("WARNING: change seed to change data order when restoring !")
         set_seed(random_seed + 666)
-        if device == torch.device("cuda"):
-            ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"))
-        else:
-            ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"), map_location=device)
+        model.transformer_rep.transformer.load_adapter(os.path.join(config["checkpoint_dir"],f"model_ckpt/model_last/{init_dict['adapter_name']}_rep"))
+        # load query adapter if it exists
+        if os.path.exists(os.path.join(config["checkpoint_dir"],f"model_ckpt/model_last/{init_dict['adapter_name']}_rep_q")):
+            model.transformer_rep_q.transformer.load_adapter(os.path.join(config['checkpoint_dir'], f"model_ckpt/model_last/{init_dict['adapter_name']}_rep_q"))
+        ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last/model_last.tar"))
+    else: # else load the entire model
+        if os.path.exists(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar")):
+            print("@@@@ RESUMING TRAINING @@@")
+            print("WARNING: change seed to change data order when restoring !")
+            set_seed(random_seed + 666)
+            if device == torch.device("cuda"):
+                ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"))
+            else:
+                ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"), map_location=device)
+            restore_model(model, ckpt["model_state_dict"])
         print("starting from step", ckpt["step"])
         print("{} remaining iterations".format(iterations[1] - ckpt["step"]))
         iterations = (ckpt["step"] + 1, config["nb_iterations"])
-        restore_model(model, ckpt["model_state_dict"])
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
         if device == torch.device("cuda"):
             for state in optimizer.state.values():
@@ -169,10 +180,13 @@ def train(exp_dict: DictConfig):
                                                      max_length=config["max_length"], batch_size=1,
                                                      # TODO fix: bs currently set to 1
                                                      shuffle=False, num_workers=4)
+        # TO-DO: adapter_name in config
         val_evaluator = SparseApproxEvalWrapper(model,
                                                 config={"top_k": exp_dict["data"]["VALIDATION_FULL_RANKING"]["TOP_K"],
                                                         "out_dir": os.path.join(config["checkpoint_dir"],
-                                                                                "val_full_ranking")
+                                                                                "val_full_ranking"),
+                                                        "adapter_name": exp_dict["init_dict"].get("adapter_name", None),
+                                                        "adapter_config": exp_dict["init_dict"].get("adapter_config", None)
                                                         },
                                                 collection_loader=full_ranking_d_loader,
                                                 q_loader=full_ranking_q_loader,

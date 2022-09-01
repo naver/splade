@@ -301,10 +301,10 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
                     and any([isinstance(child, Fuse) for child in model.transformer_rep.transformer.active_adapters.children])
                 )
 
-        if isinstance(model.transformer_rep_q, PreTrainedModel):
+        if model.transformer_rep_q and isinstance(model.transformer_rep_q.transformer, PreTrainedModel):
             model.transformer_rep_q.transformer.train_adapter(model.transformer_rep_q.transformer.active_adapters)
 
-        if model.transformer_rep.transformer.active_adapters is None and model.transformer_rep_q.transformer.active_adapters is None:
+        if not model.transformer_rep.transformer.active_adapters and not model.transformer_rep_q.transformer.active_adapters:
             raise ValueError(
                 "Expected a model with an active adapter setup."
                 "If you want to fully finetune the model use the SiameseTransformerTrainer class."
@@ -360,6 +360,12 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
                     if state is None:
                         state_dict = model_to_save.transformer_rep.transformer.state_dict()
                     torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
+
+                # save document adapters
+                model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(output_dir, WEIGHTS_NAME))
+                # Save query encoder adapters if it exists
+                if model_to_save.transformer_rep_q:
+                    model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(output_dir, WEIGHTS_NAME))
             else:
                 # rename last:
                 if os.path.exists(os.path.join(self.checkpoint_dir, "model_ckpt/model_last/model_last.tar")):
@@ -372,12 +378,16 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
                 if not os.path.exists(os.path.join(self.checkpoint_dir, "model_ckpt/model_last")):
                     os.makedirs(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
                 torch.save(state, os.path.join(self.checkpoint_dir,  "model_ckpt/model_last/model_last.tar"))
+                
+                # save document adapters
                 model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
-                if model_to_save.transformer_rep_q is not None:
+                # Save query encoder adapters if it exists
+                if model_to_save.transformer_rep_q:
                     model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
+                
                 if hasattr(model_to_save.transformer_rep.transformer, "heads"):
                     model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
-                    if model_to_save.transformer_rep_q is not None:
+                    if model_to_save.transformer_rep_q:
                             model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
 
                 if is_best:
@@ -385,14 +395,17 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
                         os.makedirs(os.path.join(self.checkpoint_dir, "model"))
                     torch.save(state, os.path.join(self.checkpoint_dir, "model/model.tar"))
                     model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model"))
+                    if model_to_save.transformer_rep_q:
+                        model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model"))
+
                     if self.train_adapter_fusion:
                         model_to_save.transformer_rep.transformer.save_all_adapter_fusions(os.path.join(self.checkpoint_dir, "model"))
-                        if model_to_save.transformer_rep_q is not None:
-                            model_to_save.transformer_rep.transformer.save_all_adapter_fusions(os.path.join(self.checkpoint_dir, "model"))
+                        if model_to_save.transformer_rep_q:
+                            model_to_save.transformer_rep_q.transformer.save_all_adapter_fusions(os.path.join(self.checkpoint_dir, "model"))
                     if hasattr(model_to_save.transformer_rep.transformer, "heads"):
                         model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
-                        if model_to_save.transformer_rep_q is not None:
-                                model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
+                        if model_to_save.transformer_rep_q:
+                                model_to_save.transformer_rep_q.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
 
                 # remove oldest checkpoint (by default only keep the last 3):
                 remove_old_ckpt_adapters(os.path.join(self.checkpoint_dir, "model_ckpt"), k=3)
@@ -401,22 +414,22 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
                         os.makedirs(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint/"))
             torch.save(state, os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint/model_final_checkpoint.tar"))
             model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
-            if model_to_save.transformer_rep_q is not None:
+            if model_to_save.transformer_rep_q:
                 model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
             if hasattr(model_to_save.transformer_rep.transformer, "heads"):
                 model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
-                if model_to_save.transformer_rep_q is not None:
+                if model_to_save.transformer_rep_q:
                         model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
             if self.overwrite_final:
                 torch.save(state, os.path.join(self.checkpoint_dir, "model/model.tar"))
-                if model_to_save.transformer_rep_q is not None:
+                if model_to_save.transformer_rep_q:
                     model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model"))
                 if hasattr(model_to_save.transformer_rep.transformer, "heads"):
                     model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
-                    if model_to_save.transformer_rep_q is not None:
+                    if model_to_save.transformer_rep_q:
                             model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
         tokenizer = model_to_save.transformer_rep.tokenizer
-        if tokenizer is not None:
+        if tokenizer:
             tokenizer.save_pretrained(output_dir)
 
         # Good practice: save your training arguments together with the trained model
