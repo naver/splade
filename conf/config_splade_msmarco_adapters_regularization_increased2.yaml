@@ -1,0 +1,36 @@
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## TRAIN ###################################
+  - train/config: splade_msmarco_adapters_regularization_increased2
+  # splade_msmarco_adapters_regularization
+  - train/data: msmarco
+  - train/model: splade_adapters
+  ############## INDEX ###################################
+  - index: msmarco
+  ############## RETRIEVE ################################
+  - retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - flops: msmarco
+
+# Direct PARAMETER setting
+config: # to be provided for each run
+  loss: InBatchPairwiseNLL
+  augment_pair: in_batch_negatives
+  checkpoint_dir: experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5/checkpoint/
+  #experiments/msmarco_2encoders_cocondenser_2051225_houlsby_hp_flops_ld9e5/checkpoint
+  #experiments/msmarco_1encoder_cocondenser_2051225_houlsby_hp_flops_ld9e5/checkpoint
+  #experiments/msmarco_1encoder_cocondenser_houlsby_hp_flops_ld9e5/checkpoint/m
+  #experiments/msmarco_2encoders_houlsby_hp_flops_ld9e5/checkpoint
+  #experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5/checkpoint #experiments/msmarco_adapters_houlsby/checkpoint # experiments/msmarco_prefixtune/checkpoint # experiments/msmarco_adapters_houlsby/checkpoint  # experiments/msmarco_adapters_houlsby_2encoders/checkpoint 
+  index_dir: experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5/index
+  #experiments/msmarco_2encoders_cocondenser_2051225_houlsby_hp_flops_ld9e5/index
+  #experiments/msmarco_1encoder_cocondenser_2051225_houlsby_hp_flops_ld9e5/index 
+  #experiments/msmarco_1encoder_cocondenser_houlsby_hp_flops_ld9e5/index 
+  # experiments/msmarco_2encoders_houlsby_hp_flops_ld9e5/index
+  #experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5/index #experiments/msmarco_adapters_houlsby/index # experiments/msmarco_adapters_houlsby/index  # experiments/msmarco_adapters_houlsby_2encoders/index
+  out_dir: experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5/out
+  #experiments/msmarco_2encoders_cocondenser_2051225_houlsby_hp_flops_ld9e5/out
+  #experiments/msmarco_1encoder_cocondenser_2051225_houlsby_hp_flops_ld9e5/out
+  # experiments/msmarco_1encoder_cocondenser_houlsby_hp_flops_ld9e5/out
+  # experiments/msmarco_2encoders_houlsby_hp_flops_ld9e5/out
+  #experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5/out #experiments/msmarco_adapters_houlsby/out # experiments/msmarco_adapters_houlsby/out # experiments/msmarco_adapters_houlsby_2encoders/out 

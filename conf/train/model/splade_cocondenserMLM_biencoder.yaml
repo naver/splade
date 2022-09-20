@@ -1,0 +1,12 @@
+# @package _global_
+
+init_dict:
+  model_type_or_dir: /scratch/1/user/classanc/mlm-flops/clean_models/COCODENSER_2051225/
+  model_type_or_dir_q: /scratch/1/user/classanc/mlm-flops/clean_models/COCODENSER_2051225/
+  freeze_d_model: 0
+  agg: max
+  fp16: true
+  adapter_config: houlsby
+  adapter_name: houlsby 
+config:
+  tokenizer_type: /scratch/1/user/classanc/mlm-flops/clean_models/COCODENSER_2051225/

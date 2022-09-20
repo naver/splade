@@ -1,0 +1,21 @@
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## TRAIN ###################################
+  - train/config: splade_msmarco_adapters_regularization_increased2
+  # splade_msmarco_adapters_regularization
+  - train/data: msmarco
+  - train/model: splade_adapters_leaveout0-3
+  ############## INDEX ###################################
+  - index: msmarco
+  ############## RETRIEVE ################################
+  - retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - flops: msmarco
+
+# Direct PARAMETER setting
+config: # to be provided for each run
+  loss: InBatchPairwiseNLL
+  augment_pair: in_batch_negatives
+  checkpoint_dir: experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5_leaveout0-3_9e5/checkpoint
+  index_dir: experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5_leaveout0-3_9e5/index
+  out_dir: experiments/msmarco_1encoder_houlsby_hp_flops_ld9e5_leaveout0-3_9e5/out
