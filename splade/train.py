@@ -43,17 +43,21 @@ def train(exp_dict: DictConfig):
         # load query adapter if it exists
         if os.path.exists(os.path.join(config["checkpoint_dir"],f"model_ckpt/model_last/{init_dict['adapter_name']}_rep_q")):
             model.transformer_rep_q.transformer.load_adapter(os.path.join(config['checkpoint_dir'], f"model_ckpt/model_last/{init_dict['adapter_name']}_rep_q"))
-        ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last/model_last.tar"))
-    else: # else load the entire model
-        if os.path.exists(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar")):
-            print("@@@@ RESUMING TRAINING @@@")
-            print("WARNING: change seed to change data order when restoring !")
-            set_seed(random_seed + 666)
-            if device == torch.device("cuda"):
-                ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"))
-            else:
-                ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"), map_location=device)
-            restore_model(model, ckpt["model_state_dict"])
+        if device == torch.device("cuda"):
+            ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last/model_last.tar"))
+        else:
+            ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last/model_last.tar"), map_location=device)
+    elif os.path.exists(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar")): # else load the entire model
+        print("@@@@ RESUMING TRAINING @@@")
+        print("WARNING: change seed to change data order when restoring !")
+        set_seed(random_seed + 666)
+        if device == torch.device("cuda"):
+            ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"))
+        else:
+            ckpt = torch.load(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar"), map_location=device)
+        restore_model(model, ckpt["model_state_dict"])
+    if os.path.exists(os.path.join(config["checkpoint_dir"], "model_ckpt/model_last.tar")) or \
+        os.path.exists(os.path.join(config['checkpoint_dir'], f"model_ckpt/model_last/model_last.tar")):
         print("starting from step", ckpt["step"])
         print("{} remaining iterations".format(iterations[1] - ckpt["step"]))
         iterations = (ckpt["step"] + 1, config["nb_iterations"])

@@ -65,8 +65,9 @@ class TransformerRep(torch.nn.Module):
     def initialize_adapters(self, adapter_name: str,
                            adapter_config: Union[str, AdapterConfig] = None,
                            **kwargs):
-            leave_out = [kwargs.get('leave_out', "")] if isinstance(kwargs.get('leave_out', ""), int) \
+            leave_out = str(kwargs.get('leave_out', "")) if isinstance(kwargs.get('leave_out', ""), int) \
                         else kwargs.get('leave_out', "")
+            #leave_out = kwargs.get("leave_out", "")
             if isinstance(adapter_config, str):
                 if adapter_config.lower() == "houlsby":
                     config = HoulsbyConfig(leave_out=list(map(int, leave_out.strip().split())))
@@ -234,6 +235,7 @@ class Splade(SiameseBase):
         if self.agg == "sum":
             return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
         else:
+            
             values, _ = torch.max(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
             return values
             # 0 masking also works with max because all activations are positive

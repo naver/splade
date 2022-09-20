@@ -22,10 +22,11 @@ def index(exp_dict: DictConfig):
                                     batch_size=config["index_retrieve_batch_size"],
                                     shuffle=False, num_workers=10, prefetch_factor=4)
     ## TO-DO: Modify Config for adapter_name
-    OmegaConf.set_struct(config, True)
-    with open_dict(config):
-        config.adapter_name = init_dict["adapter_name"]
-    OmegaConf.set_struct(config, False)
+    if "adapter_name" in init_dict.keys():
+        OmegaConf.set_struct(config, True)
+        with open_dict(config):
+            config.adapter_name = init_dict["adapter_name"]
+        OmegaConf.set_struct(config, False)
     evaluator = SparseIndexing(model=model, config=config, compute_stats=True)
     evaluator.index(d_loader)
 

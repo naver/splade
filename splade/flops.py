@@ -46,10 +46,11 @@ def flops(exp_dict: DictConfig):
                                     shuffle=False, num_workers=1)
 
     print("LOAD MODEL AND DOCUMENT INDEX")
-    OmegaConf.set_struct(config, True)
-    with open_dict(config):
-        config.adapter_name = init_dict["adapter_name"]
-    OmegaConf.set_struct(config, False)
+    if "adapter_name" in init_dict.keys():
+        OmegaConf.set_struct(config, True)
+        with open_dict(config):
+            config.adapter_name = init_dict["adapter_name"]
+        OmegaConf.set_struct(config, False)
     evaluator = SparseIndexing(model=model, config=config, compute_stats=False, restore=True)
     loaded_model = evaluator.model
     doc_index = evaluator.sparse_index

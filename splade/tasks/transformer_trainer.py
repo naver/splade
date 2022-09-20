@@ -1,7 +1,7 @@
 import json
 import os
 from collections import defaultdict
-
+import math
 import torch
 from omegaconf import open_dict
 from tqdm.auto import tqdm
@@ -289,10 +289,7 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
         model = self.model.module if hasattr(self.model, "module") else self.model  # when using DataParallel
         if isinstance(model.transformer_rep.transformer, PreTrainedModel):
             model.transformer_rep.transformer.train_adapter(model.transformer_rep.transformer.active_adapters)
-            print("Printing model backprop:")
-            for n, v in model.transformer_rep.transformer.named_parameters():
-                print(n, v.shape, v.requires_grad)
-            print()
+            
             if model.transformer_rep.transformer.active_adapters:
                 # Check if training AdapterFusion
                 self.train_adapter_fusion = (
@@ -310,6 +307,22 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
                 "If you want to fully finetune the model use the SiameseTransformerTrainer class."
             )
 
+        for n, v in model.transformer_rep.transformer.named_parameters():
+            print(n, v.shape, v.requires_grad)
+        print()
+        print("Number of training parameteres:")
+        params_t_rep = [p for p in model.transformer_rep.transformer.parameters() if p.requires_grad]
+
+        # Total number of parameters.
+        print(f"total training parameters in document encoder {sum(math.prod(p.size()) for p in params_t_rep)}")
+        if model.transformer_rep_q: 
+            params_t_rep_q = [p for p in model.transformer_rep_q.transformer.parameters() if p.requires_grad]
+            print(f"total training parameters in query encoder {sum(math.prod(p.size()) for p in params_t_rep_q)}")
+        total_parameters = [p for p in model.parameters()]
+        print(f'total parameters {sum(math.prod(p.size()) for p in total_parameters)}')
+        print(f'Using numel: {sum(p.numel() for p in model.parameters())}')
+        total_training_parameters = [p for p in model.parameters() if p.requires_grad ]
+        print(f'total training parameters {sum(math.prod(p.size()) for p in total_training_parameters)}')
     def _load_adapters(self, resume_from_checkpoint):
         adapter_loaded = False
         for file_name in os.listdir(resume_from_checkpoint):
@@ -333,7 +346,7 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
             self.config["ckpt_step"] = step
         state = {"step": step,
                  "perf": perf,
-                 "model_state_dict": model_to_save.state_dict(),
+                 #"model_state_dict": model_to_save.state_dict(),
                  "optimizer_state_dict": self.optimizer.state_dict(),
                  "config": self.config,
                  "regularizer": self.regularizer,
@@ -434,4 +447,5 @@ class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
 
         # Good practice: save your training arguments together with the trained model
         #torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
-        #super().save_checkpoint(**kwargs)
+        #super().save_checkpoint(**kwargs)       
+        

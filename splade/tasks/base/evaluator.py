@@ -14,7 +14,7 @@ class Evaluator:
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         if restore:
              #### TO-DO: load adaper using adapter-hub load method #####
-            if config["adapter_name"]:
+            if "adapter_name" in config.keys() and config["adapter_name"]:
                 if hasattr(self.model, "module"): # data parallel
                     self.model.module.transformer_rep.transformer.load_adapter(os.path.join(config["checkpoint_dir"],f"model/{config['adapter_name']}_rep"))#f"{config['checkpoint_dir']}/model/{config["adapter_name"]}_rep")
                 else:
