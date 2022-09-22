@@ -1,0 +1,20 @@
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## TRAIN ###################################
+  - train/config: splade_msmarco_adapters_regularization_increased2_distil_v5
+  # splade_msmarco_adapters_regularization
+  - train/data: distil_from_ensemble
+  - train/model: splade_cocondenser
+  ############## INDEX ###################################
+  - index: msmarco
+  ############## RETRIEVE ################################
+  - retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - flops: msmarco
+
+# Direct PARAMETER setting
+config: # to be provided for each run
+  loss: DistilMarginMSE
+  checkpoint_dir: experiments/msmarco_1encoder_distil_hp_flops_cocondenser_v5/checkpoint
+  index_dir: experiments/msmarco_1encoder_distil_hp_flops_cocondenser_v5/index
+  out_dir: experiments/msmarco_1encoder_distil_hp_flops_cocondenser_v5/out
