@@ -1,0 +1,27 @@
+# @package _global_
+
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## TRAIN ###################################
+  - ../train/config: efficient_splade_doc
+  - ../train/data: distil_from_ensemble
+  - ../train/model: doc
+  ############## INDEX ###################################
+  - ../index: msmarco
+  ############## RETRIEVE ################################
+  - ../retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - ../flops: msmarco
+
+# Direct PARAMETER setting
+config:
+  loss: KlDiv
+  regularizer:
+    FLOPS:
+      lambda_d: 5e-3
+      T: 10000
+      targeted_rep: rep
+      reg: FLOPS
+  checkpoint_dir: models/efficient/VI/doc-small/checkpoint
+  index_dir: models/efficient/VI/doc-small/index
+  out_dir: models/efficient/VI/doc-small/out
