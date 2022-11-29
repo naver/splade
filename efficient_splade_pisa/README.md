@@ -5,7 +5,6 @@ The pre-requisite step is to install pisa. Note that it could take a while.
 ```
 git clone https://github.com/pisa-engine/pisa.git
 cd pisa
-git checkout weight-queries
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
