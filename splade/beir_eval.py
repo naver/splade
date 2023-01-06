@@ -10,13 +10,15 @@ from beir.retrieval.evaluation import EvaluateRetrieval
 from omegaconf import DictConfig
 from tqdm.auto import tqdm
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'conf'))
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from .datasets.dataloaders import CollectionDataLoader
-from .datasets.datasets import BeirDataset
-from .models.models_utils import get_model
-from .tasks.transformer_evaluator import SparseIndexing, SparseRetrieval
-from .utils.utils import get_initialize_config
-
+from splade.datasets.dataloaders import CollectionDataLoader
+from splade.datasets.datasets import BeirDataset
+from splade.models.models_utils import get_model
+from splade.tasks.transformer_evaluator import SparseIndexing, SparseRetrieval
+from splade.utils.utils import get_initialize_config
+from omegaconf import OmegaConf,open_dict
 
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
 def retrieve(exp_dict: DictConfig):
@@ -61,6 +63,11 @@ def retrieve(exp_dict: DictConfig):
     d_loader = CollectionDataLoader(dataset=d_collection, tokenizer_type=model_training_config["tokenizer_type"],
                                     max_length=model_training_config["max_length"], batch_size=batch_size_d,
                                     shuffle=False, num_workers=4)
+    if "adapter_name" in init_dict.keys():
+        OmegaConf.set_struct(config, True)
+        with open_dict(config):
+            config.adapter_name = init_dict["adapter_name"]
+        OmegaConf.set_struct(config, False)
     evaluator = SparseIndexing(model=model, config=config, compute_stats=True)
     evaluator.index(d_loader, id_dict=d_collection.idx_to_key)
 

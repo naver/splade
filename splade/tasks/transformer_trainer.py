@@ -1,16 +1,20 @@
 import json
 import os
 from collections import defaultdict
-
+import math
 import torch
 from omegaconf import open_dict
 from tqdm.auto import tqdm
 
+from transformers import PreTrainedModel
+from transformers.modeling_utils import unwrap_model
+from transformers.adapters.composition import AdapterCompositionBlock, Fuse
+from transformers.adapters.utils import WEIGHTS_NAME, CONFIG_NAME
+
 from ..tasks import amp
 from ..tasks.base.trainer import TrainerIter
 from ..utils.metrics import init_eval
-from ..utils.utils import parse
-
+from ..utils.utils import parse, remove_old_ckpt_adapters
 
 class TransformerTrainer(TrainerIter):
     def __init__(self, *args, **kwargs):
@@ -274,3 +278,174 @@ class SiameseTransformerTrainer(TransformerTrainer):
             tokenizer = model_to_save.transformer_rep_q.tokenizer
             tokenizer.save_pretrained(output_dir_q)
         super().save_checkpoint(**kwargs)
+
+
+class SiameseTransformerAdapterTrainer(SiameseTransformerTrainer):
+    def __init__(self, adapter_names, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        #model_to_save = self.model.module if hasattr(self.model, "module") else self.model  # when using DataParallel
+        # Set the defaults for loading/ saving model & adapters
+        model = self.model.module if hasattr(self.model, "module") else self.model  # when using DataParallel
+        if isinstance(model.transformer_rep.transformer, PreTrainedModel):
+            model.transformer_rep.transformer.train_adapter(model.transformer_rep.transformer.active_adapters)
+            
+            if model.transformer_rep.transformer.active_adapters:
+                # Check if training AdapterFusion
+                self.train_adapter_fusion = (
+                    isinstance(model.transformer_rep.transformer.active_adapters, Fuse)
+                    or isinstance(model.transformer_rep.transformer.active_adapters, AdapterCompositionBlock)
+                    and any([isinstance(child, Fuse) for child in model.transformer_rep.transformer.active_adapters.children])
+                )
+
+        if model.transformer_rep_q and isinstance(model.transformer_rep_q.transformer, PreTrainedModel):
+            model.transformer_rep_q.transformer.train_adapter(model.transformer_rep_q.transformer.active_adapters)
+
+        if not model.transformer_rep.transformer.active_adapters and not model.transformer_rep_q.transformer.active_adapters:
+            raise ValueError(
+                "Expected a model with an active adapter setup."
+                "If you want to fully finetune the model use the SiameseTransformerTrainer class."
+            )
+
+        for n, v in model.transformer_rep.transformer.named_parameters():
+            print(n, v.shape, v.requires_grad)
+        print()
+        print("Number of training parameteres:")
+        params_t_rep = [p for p in model.transformer_rep.transformer.parameters() if p.requires_grad]
+
+        # Total number of parameters.
+        print(f"total training parameters in document encoder {sum(math.prod(p.size()) for p in params_t_rep)}")
+        if model.transformer_rep_q: 
+            params_t_rep_q = [p for p in model.transformer_rep_q.transformer.parameters() if p.requires_grad]
+            print(f"total training parameters in query encoder {sum(math.prod(p.size()) for p in params_t_rep_q)}")
+        total_parameters = [p for p in model.parameters()]
+        print(f'total parameters {sum(math.prod(p.size()) for p in total_parameters)}')
+        print(f'Using numel: {sum(p.numel() for p in model.parameters())}')
+        total_training_parameters = [p for p in model.parameters() if p.requires_grad ]
+        print(f'total training parameters {sum(math.prod(p.size()) for p in total_training_parameters)}')
+    def _load_adapters(self, resume_from_checkpoint):
+        adapter_loaded = False
+        for file_name in os.listdir(resume_from_checkpoint):
+            if os.path.isdir(os.path.join(resume_from_checkpoint, file_name)):
+                if "," not in file_name and "adapter_config.json" in os.listdir(
+                    os.path.join(resume_from_checkpoint, file_name)
+                ):
+                    self.model.load_adapter(os.path.join(os.path.join(resume_from_checkpoint, file_name)))
+                    adapter_loaded = True
+        return adapter_loaded
+
+    def _load_adapter_fusions(self, resume_from_checkpoint):
+        for file_name in os.listdir(resume_from_checkpoint):
+            if os.path.isdir(os.path.join(resume_from_checkpoint, file_name)):
+                if "," in file_name:
+                    self.model.load_adapter_fusion(os.path.join(resume_from_checkpoint, file_name))
+
+    def save_checkpoint(self, step, perf, is_best=True, final_checkpoint=False, **kwargs):
+        model_to_save = self.model.module if hasattr(self.model, "module") else self.model  # when using DataParallel
+        with open_dict(self.config):
+            self.config["ckpt_step"] = step
+        state = {"step": step,
+                 "perf": perf,
+                 #"model_state_dict": model_to_save.state_dict(),
+                 "optimizer_state_dict": self.optimizer.state_dict(),
+                 "config": self.config,
+                 "regularizer": self.regularizer,
+                 }
+        if self.scheduler is not None:
+            scheduler_state_dict = self.scheduler.state_dict()
+            state["scheduler_state_dict"] = scheduler_state_dict
+
+        # it is practical (although redundant) to save model weights using huggingface API, because if the model has
+        # no other params, we can reload it easily with .from_pretrained()
+        output_dir = os.path.join(self.config["checkpoint_dir"], "model")
+        #model_to_save.transformer_rep.transformer.save_pretrained(output_dir)
+
+        #Save a trained model and configuration using `save_pretrained()`.
+        # They can then be reloaded using `from_pretrained()`
+        if not final_checkpoint:
+            if not isinstance(model_to_save.transformer_rep.transformer, PreTrainedModel):
+                if isinstance(unwrap_model(model_to_save.transformer_rep.transformer), PreTrainedModel):
+                    if state is None:
+                        state_dict = model_to_save.transformer_rep.transformer.state_dict()
+                    unwrap_model(model_to_save.transformer_rep.transformer).save_pretrained(output_dir, state_dict=state_dict)
+                else:
+                    #logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
+                    if state is None:
+                        state_dict = model_to_save.transformer_rep.transformer.state_dict()
+                    torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
+
+                # save document adapters
+                model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(output_dir, WEIGHTS_NAME))
+                # Save query encoder adapters if it exists
+                if model_to_save.transformer_rep_q:
+                    model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(output_dir, WEIGHTS_NAME))
+            else:
+                # rename last:
+                if os.path.exists(os.path.join(self.checkpoint_dir, "model_ckpt/model_last/model_last.tar")):
+                    last_config = torch.load(os.path.join(self.checkpoint_dir, "model_ckpt/model_last/model_last.tar"))
+                    step_last_config = last_config["step"]
+                    if not os.path.exists(os.path.join(self.checkpoint_dir, f"model_ckpt/model_ckpt_{step_last_config}")):
+                        os.makedirs(os.path.join(self.checkpoint_dir, f"model_ckpt/model_ckpt_{step_last_config}"))
+                    os.rename(os.path.join(self.checkpoint_dir, "model_ckpt/model_last/model_last.tar"),
+                            os.path.join(self.checkpoint_dir, f"model_ckpt/model_ckpt_{step_last_config}/model_ckpt_{step_last_config}.tar"))
+                if not os.path.exists(os.path.join(self.checkpoint_dir, "model_ckpt/model_last")):
+                    os.makedirs(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
+                torch.save(state, os.path.join(self.checkpoint_dir,  "model_ckpt/model_last/model_last.tar"))
+                
+                # save document adapters
+                model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
+                # Save query encoder adapters if it exists
+                if model_to_save.transformer_rep_q:
+                    model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
+                
+                if hasattr(model_to_save.transformer_rep.transformer, "heads"):
+                    model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
+                    if model_to_save.transformer_rep_q:
+                            model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_last"))
+
+                if is_best:
+                    if not os.path.exists(os.path.join(self.checkpoint_dir, "model")):
+                        os.makedirs(os.path.join(self.checkpoint_dir, "model"))
+                    torch.save(state, os.path.join(self.checkpoint_dir, "model/model.tar"))
+                    model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model"))
+                    if model_to_save.transformer_rep_q:
+                        model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model"))
+
+                    if self.train_adapter_fusion:
+                        model_to_save.transformer_rep.transformer.save_all_adapter_fusions(os.path.join(self.checkpoint_dir, "model"))
+                        if model_to_save.transformer_rep_q:
+                            model_to_save.transformer_rep_q.transformer.save_all_adapter_fusions(os.path.join(self.checkpoint_dir, "model"))
+                    if hasattr(model_to_save.transformer_rep.transformer, "heads"):
+                        model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
+                        if model_to_save.transformer_rep_q:
+                                model_to_save.transformer_rep_q.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
+
+                # remove oldest checkpoint (by default only keep the last 3):
+                remove_old_ckpt_adapters(os.path.join(self.checkpoint_dir, "model_ckpt"), k=3)
+        else:
+            if not os.path.exists(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint/")):
+                        os.makedirs(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint/"))
+            torch.save(state, os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint/model_final_checkpoint.tar"))
+            model_to_save.transformer_rep.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
+            if model_to_save.transformer_rep_q:
+                model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
+            if hasattr(model_to_save.transformer_rep.transformer, "heads"):
+                model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
+                if model_to_save.transformer_rep_q:
+                        model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model_ckpt/model_final_checkpoint"))
+            if self.overwrite_final:
+                torch.save(state, os.path.join(self.checkpoint_dir, "model/model.tar"))
+                if model_to_save.transformer_rep_q:
+                    model_to_save.transformer_rep_q.transformer.save_all_adapters(os.path.join(self.checkpoint_dir, "model"))
+                if hasattr(model_to_save.transformer_rep.transformer, "heads"):
+                    model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
+                    if model_to_save.transformer_rep_q:
+                            model_to_save.transformer_rep.transformer.save_all_heads(os.path.join(self.checkpoint_dir, "model"))
+        tokenizer = model_to_save.transformer_rep.tokenizer
+        if tokenizer:
+            tokenizer.save_pretrained(output_dir)
+
+        # Good practice: save your training arguments together with the trained model
+        #torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+        #super().save_checkpoint(**kwargs)       
+        

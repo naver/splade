@@ -8,7 +8,7 @@ from .evaluate import evaluate
 from .models.models_utils import get_model
 from .tasks.transformer_evaluator import SparseRetrieval
 from .utils.utils import get_dataset_name, get_initialize_config
-
+from omegaconf import OmegaConf,open_dict
 
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
 def retrieve_evaluate(exp_dict: DictConfig):
@@ -23,6 +23,12 @@ def retrieve_evaluate(exp_dict: DictConfig):
         q_loader = CollectionDataLoader(dataset=q_collection, tokenizer_type=model_training_config["tokenizer_type"],
                                         max_length=model_training_config["max_length"], batch_size=batch_size,
                                         shuffle=False, num_workers=1)
+        # TO-DO: Modify Config for adapter_name
+        if "adapter_name" in init_dict.keys():
+            OmegaConf.set_struct(config, True)
+            with open_dict(config):
+                config.adapter_name = init_dict["adapter_name"]
+            OmegaConf.set_struct(config, False)
         evaluator = SparseRetrieval(config=config, model=model, dataset_name=get_dataset_name(data_dir),
                                     compute_stats=True, dim_voc=model.output_dim)
         evaluator.retrieve(q_loader, top_k=exp_dict["config"]["top_k"], threshold=exp_dict["config"]["threshold"])

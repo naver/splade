@@ -11,6 +11,7 @@ from .datasets.datasets import CollectionDatasetPreLoad
 from .models.models_utils import get_model
 from .tasks.transformer_evaluator import SparseIndexing
 from .utils.utils import get_initialize_config
+from omegaconf import OmegaConf,open_dict
 
 
 def estim_act_prob(dist, collection_size, voc_size=30522):
@@ -45,6 +46,11 @@ def flops(exp_dict: DictConfig):
                                     shuffle=False, num_workers=1)
 
     print("LOAD MODEL AND DOCUMENT INDEX")
+    if "adapter_name" in init_dict.keys():
+        OmegaConf.set_struct(config, True)
+        with open_dict(config):
+            config.adapter_name = init_dict["adapter_name"]
+        OmegaConf.set_struct(config, False)
     evaluator = SparseIndexing(model=model, config=config, compute_stats=False, restore=True)
     loaded_model = evaluator.model
     doc_index = evaluator.sparse_index
