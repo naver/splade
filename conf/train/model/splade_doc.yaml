@@ -1,3 +1,5 @@
+# @package _global_
+
 init_dict:
   model_type_or_dir: distilbert-base-uncased
   model_type_or_dir_q: null
