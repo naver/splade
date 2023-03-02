@@ -19,10 +19,10 @@ class SparseIndexing(Evaluator):
     """sparse indexing
     """
 
-    def __init__(self, model, config, compute_stats=False, dim_voc=None, is_query=False, **kwargs):
+    def __init__(self, model, config, compute_stats=False, dim_voc=None, is_query=False, force_new=True,**kwargs):
         super().__init__(model, config, **kwargs)
         self.index_dir = config["index_dir"] if config is not None else None
-        self.sparse_index = IndexDictOfArray(self.index_dir, dim_voc=dim_voc, force_new=True)
+        self.sparse_index = IndexDictOfArray(self.index_dir, dim_voc=dim_voc, force_new=force_new)
         self.compute_stats = compute_stats
         self.is_query = is_query
         if self.compute_stats:
