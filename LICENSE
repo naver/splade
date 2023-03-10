@@ -1,4 +1,4 @@
-SPLADE
+SPLADE v0.1.1
 Copyright (c) 2021-present NAVER Corp.
 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 license
 
@@ -447,17 +447,10 @@ Creative Commons may be contacted at creativecommons.org.
 
 ATTRIBUTIONS:
 
-The beir_evaluation folder is derived from AND takes code directly
-from the BEIR repository available here:
+The file splade/beir_eval.py is derived from AND takes code directly from the BEIR repository available here:
 https://github.com/UKPLab/beir, which is distributed under the APACHE 2.0 license available here:
 https://github.com/UKPLab/beir/blob/main/LICENSE
 which is reproduced after this section.
-
-The training_with_sentence_transformers folder is derived from AND takes code directly
-from the Sentence Transformers repository available here:
-https://github.com/UKPLab/sentence-transformers/, which is distributed under the APACHE 2.0 license available here:
-https://github.com/UKPLab/sentence-transformers/blob/master/LICENSE
-which is reproduced below:
 
                                  Apache License
                            Version 2.0, January 2004
