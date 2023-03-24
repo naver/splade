@@ -1,5 +1,6 @@
 import hydra
 from omegaconf import DictConfig
+import os
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
 from .datasets.dataloaders import CollectionDataLoader
@@ -13,6 +14,12 @@ from .utils.utils import get_dataset_name, get_initialize_config
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
 def retrieve_evaluate(exp_dict: DictConfig):
     exp_dict, config, init_dict, model_training_config = get_initialize_config(exp_dict)
+
+    #if HF: need to udate config.
+    if "hf_training" in config:
+       init_dict.model_type_or_dir=os.path.join(config.checkpoint_dir,"model")
+       init_dict.model_type_or_dir_q=os.path.join(config.checkpoint_dir,"model/query") if init_dict.model_type_or_dir_q else None
+
 
     model = get_model(config, init_dict)
 
