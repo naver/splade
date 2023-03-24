@@ -91,9 +91,10 @@ def hf_train(exp_dict: DictConfig):
 
 
     last_checkpoint = None
-    if os.path.isdir(training_args.output_dir) and  not training_args.overwrite_output_dir:
+    if  training_args.resume_from_checkpoint: #(os.path.isdir(training_args.output_dir) and  not training_args.overwrite_output_dir): 
         last_checkpoint  =  get_last_checkpoint(training_args.output_dir)
-
+        print (last_checkpoint)
+    
     trainer.train(resume_from_checkpoint=last_checkpoint)
     final_path = os.path.join(training_args.output_dir,"model")
     os.makedirs(final_path,exist_ok=True)
