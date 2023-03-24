@@ -14,7 +14,8 @@ class Evaluator:
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         if restore:
             if self.device == torch.device("cuda"):
-                if "pretrained_no_yamlconfig" not in config or not config["pretrained_no_yamlconfig"]:
+                if "hf_training" in config:pass
+                elif "pretrained_no_yamlconfig" not in config or not config["pretrained_no_yamlconfig"]:
                     checkpoint = torch.load(os.path.join(config["checkpoint_dir"], "model/model.tar"))
                     restore_model(model, checkpoint["model_state_dict"])
                     print(
