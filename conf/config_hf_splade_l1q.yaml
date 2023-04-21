@@ -14,7 +14,7 @@ defaults:
 
 # Direct PARAMETER setting
 config:
-  train_batch_size: 5
+  train_batch_size: 1
   loss: KlDiv
   regularizer:
     FLOPS:
