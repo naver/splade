@@ -43,6 +43,9 @@ to models doing intense query/doc expansion) with different properties and perfo
 *splade: a spork that is sharp along one edge or both edges, enabling it to be used as a knife, a fork and a spoon.*
 
 ***
+# What's New:
+* April 2023 We have removed the weights and pushed them to huggingface (https://huggingface.co/naver/splade_v2_max and https://huggingface.co/naver/splade_v2_distil) 
+
 
 # Getting started :rocket:
 
