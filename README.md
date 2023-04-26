@@ -48,8 +48,7 @@ to models doing intense query/doc expansion) with different properties and perfo
 
 ## Requirements
 
-*In order to get the weights from this repo, be sure to have git lfs installed (not mandatory).* We recommend to start
-from a fresh environment, and install the packages from `conda_splade_env.yml`.
+We recommend to start from a fresh environment, and install the packages from `conda_splade_env.yml`.
 
 ```
 conda create -n splade_env python=3.9
@@ -66,8 +65,8 @@ predicted "bag-of-expanded-words". We provide weights for six main models:
 
 | model | MRR@10 (MS MARCO dev) | 
 | --- | --- |
-| `splade_max` (**v2**) | 34.0 |
-| `distilsplade_max` (**v2**) | 36.8 |
+| `naver/splade_v2_max` (**v2** [HF](https://huggingface.co/naver/splade_v2_max)) | 34.0 |
+| `naver/splade_v2_distil` (**v2** [HF](https://huggingface.co/naver/splade_v2_distil)) | 36.8 |
 | `naver/splade-cocondenser-selfdistil` (**SPLADE++**, [HF](https://huggingface.co/naver/splade-cocondenser-selfdistil)) | 37.6 | 
 | `naver/splade-cocondenser-ensembledistil` (**SPLADE++**, [HF](https://huggingface.co/naver/splade-cocondenser-ensembledistil)) | 38.3 |
 | `naver/efficient-splade-V-large-doc` ([HF](https://huggingface.co/naver/efficient-splade-V-large-doc)) + `naver/efficient-splade-V-large-query` ([HF](https://huggingface.co/naver/efficient-splade-V-large-query)) (**efficient SPLADE**) | 38.8 |
