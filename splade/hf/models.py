@@ -2,14 +2,16 @@ import torch
 from transformers import AutoModelForMaskedLM, AutoModel
 import os
 from typing import Dict, List, Optional, Tuple, Union
-# from transformers.adapters.configuration import AdapterConfig
-# from transformers.adapters import (
-#     HoulsbyConfig,
-#     PfeifferConfig,
-#     PrefixTuningConfig,
-#     #LoRAConfig,
-#     CompacterConfig
-#     )
+try:
+    from transformers.adapters.configuration import AdapterConfig
+    from transformers.adapters import (
+        HoulsbyConfig,
+        PfeifferConfig,
+        PrefixTuningConfig,
+        LoRAConfig,
+        CompacterConfig
+        )
+except ImportError: print('no adapter version')
 
 class SpladeDoc(torch.nn.Module):
 
@@ -210,15 +212,20 @@ class TransformerRep(SpladeStart):
     #             tokenizer.save_pretrained(query_output_dir)
 
     def save(self,output_dir, tokenizer):
-        #self.doc_encoder.save_pretrained(output_dir)
-        model_dict = self.doc_encoder.state_dict()
-        torch.save(model_dict, os.path.join(output_dir,  "pytorch_model.bin"))
-        self.doc_encoder.config.save_pretrained(output_dir)
+        if self.doc_encoder.active_adapters:
+            self.doc_encoder.save_all_adapters(output_dir)
+        else:
+            model_dict = self.doc_encoder.state_dict()
+            torch.save(model_dict, os.path.join(output_dir,  "pytorch_model.bin"))
+            self.doc_encoder.config.save_pretrained(output_dir)
 
         if not self.shared_weights:
             query_output_dir = os.path.join(output_dir,"query")
             os.makedirs(query_output_dir, exist_ok=True)
-            self.query_encoder.save_pretrained(query_output_dir)
+            if self.query_encoder.active_adapters:
+                self.query_encoder.save_all_adapters(query_output_dir)
+            else:
+                self.query_encoder.save_pretrained(query_output_dir)
             self.query_encoder.config.save_pretrained(query_output_dir)
             if tokenizer:
                 tokenizer.save_pretrained(query_output_dir)

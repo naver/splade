@@ -1,10 +1,9 @@
 from typing import Dict
-from transformers.trainer import Trainer, logger, LabelSmoother
+from transformers.trainer import Trainer, logger
 from transformers import PreTrainedModel
 import torch
 import os
 import numpy as np
-from transformers.adapters.composition import AdapterCompositionBlock, Fuse
 
 class RerankerTrainer(Trainer):
 
@@ -129,23 +128,31 @@ class BaseTrainer(Trainer):
 
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         if model is None:
-            model = self.model
+           model=self.model
 
-        WEIGHTS_NAME = "pytorch_model.bin"
-        # We load the model state dict on the CPU to avoid an OOM error.
-        state_dict = torch.load(os.path.join(resume_from_checkpoint, WEIGHTS_NAME), map_location="cpu")
-        # workaround for FSDP bug https://github.com/pytorch/pytorch/issues/82963
-        # which takes *args instead of **kwargs
-        load_result = model.doc_encoder.load_state_dict(state_dict, False)
-        #query
-        if model.shared_weights:
-            model.query_encoder = model.doc_encoder
+        if model.doc_encoder_adapter_name:
+            model.doc_encoder.load_adapter(os.path.join(resume_from_checkpoint,model.doc_encoder_adapter_name))
+            # query
+            if model.query_encoder_adapter_name:
+                model.query_encoder.load_adapter(os.path.join(resume_from_checkpoint,'query',model.query_encoder_adapter_name))
+
         else:
-            state_dict = torch.load(os.path.join(resume_from_checkpoint, "query",WEIGHTS_NAME), map_location="cpu")
-            load_result = model.query_encoder.load_state_dict(state_dict, False)
-        # release memory
-        del state_dict
-        self._issue_warnings_after_load(load_result)
+            WEIGHTS_NAME = "pytorch_model.bin"
+            # We load the model state dict on the CPU to avoid an OOM error.
+            state_dict = torch.load(os.path.join(resume_from_checkpoint, WEIGHTS_NAME), map_location="cpu")
+            # workaround for FSDP bug https://github.com/pytorch/pytorch/issues/82963
+            # which takes *args instead of **kwargs
+            load_result = model.doc_encoder.load_state_dict(state_dict, False)
+            #query
+            if model.shared_weights:
+                model.query_encoder = model.doc_encoder
+            else:
+                state_dict = torch.load(os.path.join(resume_from_checkpoint, "query",WEIGHTS_NAME), map_location="cpu")
+                load_result = model.query_encoder.load_state_dict(state_dict, False)
+            # release memory
+            del state_dict
+            self._issue_warnings_after_load(load_result)
+            
 
 class DistilTrainer(BaseTrainer):
 
@@ -263,19 +270,7 @@ class DistilTrainer(BaseTrainer):
         else:
             return loss, [full_output]
 
-    def _save(self, output_dir, state_dict=None):
-        # If we are executing this function, we are the process zero, so we don't check for that.
-        output_dir = output_dir if output_dir is not None else self.args.output_dir
-        os.makedirs(output_dir, exist_ok=True)
-        logger.info(f"Saving model checkpoint to {output_dir}")
-        # Save a trained model and configuration using `save_pretrained()`.
-        # They can then be reloaded using `from_pretrained()`
-        if not isinstance(self.model, PreTrainedModel):
-            self.model.save(output_dir,self.tokenizer)
-        else:
-            self.model.save_pretrained(output_dir, state_dict=state_dict)
-        if self.tokenizer is not None:
-            self.tokenizer.save_pretrained(output_dir)
+
 
 
 class FirstStageTrainer(BaseTrainer):
@@ -296,7 +291,6 @@ class FirstStageTrainer(BaseTrainer):
         self.splade_doc = splade_doc
         self.step = 0
         self.dense = dense
-        #self.setup_adapters_for_training()
 
     def log(self, logs: Dict[str, float]) -> None:
         """
@@ -366,39 +360,4 @@ class FirstStageTrainer(BaseTrainer):
         else:
             return loss, [full_output]
 
-    def _save(self, output_dir, state_dict=None):
-        # If we are executing this function, we are the process zero, so we don't check for that.
-        output_dir = output_dir if output_dir is not None else self.args.output_dir
-        os.makedirs(output_dir, exist_ok=True)
-        logger.info(f"Saving model checkpoint to {output_dir}")
-        # Save a trained model and configuration using `save_pretrained()`.
-        # They can then be reloaded using `from_pretrained()`
-        if not isinstance(self.model, PreTrainedModel):
-            self.model.save(output_dir,self.tokenizer)
-        else:
-            self.model.save_pretrained(output_dir, state_dict=state_dict)
-        if self.tokenizer is not None:
-            self.tokenizer.save_pretrained(output_dir)
 
-    def setup_adapters_for_training(self):
-        self.model.doc_encoder.train_adapter(self.model.doc_encoder.active_adapters)
-        print("Printing model backprop:")
-        for n, v in self.model.doc_encoder.named_parameters():
-            print(n, v.shape, v.requires_grad)
-        print()
-        if self.model.doc_encoder.active_adapters:
-            # Check if training AdapterFusion
-            self.train_adapter_fusion = (
-                isinstance(self.model.doc_encoder.active_adapters, Fuse)
-                or isinstance(self.model.doc_encoder.active_adapters, AdapterCompositionBlock)
-                and any([isinstance(child, Fuse) for child in self.model.doc_encoder.active_adapters.children])
-            )
-
-        if self.model.query_encoder != self.model.doc_encoder and isinstance(self.model.query_encoder, PreTrainedModel):
-            self.model.query_encoder.train_adapter(self.model.query_encoder.active_adapters)
-
-        if not self.model.doc_encoder.active_adapters and not self.model.query_encoder.active_adapters:
-            raise ValueError(
-                "Expected a model with an active adapter setup."
-                "If you want to fully finetune the model use the SiameseTransformerTrainer class."
-            )
