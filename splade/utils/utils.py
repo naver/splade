@@ -122,6 +122,12 @@ def get_initialize_config(exp_dict: DictConfig, train=False):
             model_training_config = config
         else:
             model_training_config = OmegaConf.load(os.path.join(config["checkpoint_dir"], "config.yaml"))["config"]
+
+        #if HF: need to update config (except for adapters...).
+        if not "adapter_name" in config and "hf_training" in config:
+            init_dict.model_type_or_dir=os.path.join(config.checkpoint_dir,"model")
+            init_dict.model_type_or_dir_q=os.path.join(config.checkpoint_dir,"model/query") if init_dict.model_type_or_dir_q else None
+                   
     return exp_dict, config, init_dict, model_training_config
 
 

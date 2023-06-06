@@ -1,4 +1,4 @@
-from .args import ModelArguments, DataTrainingArguments, LocalTrainingArguments
+from splade.hf.args import ModelArguments, DataTrainingArguments, LocalTrainingArguments
 import os
 
 def convert(exp_dict):
@@ -43,9 +43,11 @@ def convert(exp_dict):
 
     # ad tokenizer to model_args ?
     m.tokenizer_name_or_path = config.tokenizer_type
-    #m.adapter_name = 
-    #m.adapter_config = 
-    #m.load_adapter = 
+    try:
+        m.adapter_name = config.adapter_name
+        m.adapter_config = config.adapter_config
+    except : pass # no adapter
+    #m.load_adapter = ??
 
 
 
@@ -68,32 +70,33 @@ def convert(exp_dict):
     for k in hf.data.keys():
         setattr(d,k, hf.data[k])
     #will overwrite default/hf.yaml values    
-    #d.result_path
     
     if data.type == "hard_negatives":
-        d.scores = data.TRAIN.DATASET_PATH
+        d.training_data_path = data.TRAIN.DATASET_PATH
+        d.training_data_type = "pkl_dict"
         d.document_dir = os.path.join(data.TRAIN.D_COLLECTION_PATH,'raw.tsv') 
         d.query_dir = os.path.join(data.TRAIN.Q_COLLECTION_PATH,'raw.tsv')
         d.qrels_path = data.TRAIN.QREL_PATH
     elif data.type == "triplets":
-        # currently command line hf.data
-        pass
-
-    #d.negatives_path
-    #d.n_negatives
-    #d.margin
-    #d.top_k
+        if d.training_data_path is None:
+            d.training_data_path = os.path.join(data.TRAIN_DATA_DIR,'raw.tsv')
 
 
     ############  training ############
     for k in hf.training.keys():
-        setattr(t,k, hf.training[k])
+        # [] in hydra is ListConfig which is not JSON serialized
+        if k=="report_to":
+            setattr(t,k,list(hf.training[k]))
+        else:
+            setattr(t,k, hf.training[k])
+    
     #will overwrite default/hf.yaml values    
     t.learning_rate = config.lr
     t.output_dir =  config.checkpoint_dir  
     #t.logging_dir = 
     t.per_device_train_batch_size =config.train_batch_size
     t.seed=config.seed
+    t.fp16=init_dict.fp16
     #t.logging_steps = 
     #t.mse_margin = 
 
@@ -102,11 +105,21 @@ def convert(exp_dict):
 
     if not m.dense:
        # here what if not l1q
-       t.l0d  = config.regularizer.FLOPS.lambda_d 
-       try: t.l0q = config.regularizer.L1.lambda_q
-       except: # omegaconf.errors.ConfigKeyError
-           t.l0q = t.l0d
-
+        t.l0d = config.regularizer.FLOPS.lambda_d
+        try:
+            t.T_d = config.regularizer.FLOPS.T 
+        except:
+            t.T_d = 0
+        try: 
+            t.l0q = config.regularizer.L1.lambda_q
+            t.T_q = config.regularizer.L1.T
+        except: # omegaconf.errors.ConfigKeyError
+            try:
+                t.l0q = config.regularizer.FLOPS.lambda_q
+                t.l0q = config.regularizer.FLOPS.T
+            except:
+                t.l0q = t.l0d
+                t.T_q = t.T_d
     #t.save_total_limit
 
 
