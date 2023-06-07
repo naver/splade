@@ -1,8 +1,8 @@
 # CODE/DATA used in Benchmarking Middle-Trained Language Models for Neural Search
-##Paper:
+## Paper:
  * https://arxiv.org/abs/2306.02867
 
-##Middle-trained models:
+## Middle-trained models:
 * bert-base-uncased
 * Shitao/RetroMAE
 * Shitao/RetroMAE_MSMARCO
@@ -10,7 +10,7 @@
 * bert-ms-cls (soon on https://huggingface.co/models?)
 * LexMAE  (see https://github.com/taoshen58/LexMAE)
 
-##Data
+## Data
  see https://oss.navercorp.com/nle-sar/learn2index#data
 
 
