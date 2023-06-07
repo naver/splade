@@ -1,15 +1,20 @@
 import torch
 from transformers import AutoModelForMaskedLM, AutoModel
+from transformers.trainer import  logger
+from transformers import PreTrainedModel
 import os
-from typing import Dict, List, Optional, Tuple, Union
-# from transformers.adapters.configuration import AdapterConfig
-# from transformers.adapters import (
-#     HoulsbyConfig,
-#     PfeifferConfig,
-#     PrefixTuningConfig,
-#     #LoRAConfig,
-#     CompacterConfig
-#     )
+from typing import Dict, List
+
+try:
+    from transformers.adapters.configuration import AdapterConfig
+    from transformers.adapters import (
+        HoulsbyConfig,
+        PfeifferConfig,
+        PrefixTuningConfig,
+        LoRAConfig,
+        CompacterConfig
+        )
+except ImportError: print('no adapter version')
 
 class SpladeDoc(torch.nn.Module):
 
@@ -42,17 +47,19 @@ class SpladeDoc(torch.nn.Module):
         q_bow[:, self.cls_id] = 0  # otherwise the pad tok is in bow
         q_bow[:, self.sep_id] = 0  # otherwise the pad tok is in bow
         return q_bow
-    
-class SpladeStart(torch.nn.Module):
 
+    def _save(self, output_dir, state_dict=None):
+        ## SAVE CHECKPOINT !
+        pass    
+
+class SPLADE(torch.nn.Module):
+    
     @staticmethod
     def splade_max(output, attention_mask):
         # tokens: output of a huggingface tokenizer
         relu = torch.nn.ReLU(inplace=False)
         values, _ = torch.max(torch.log(1 + relu(output)) * attention_mask.unsqueeze(-1), dim=1)
         return values
-
-class TransformerRep(SpladeStart):
 
     def __init__(self, model_type_or_dir, tokenizer=None, shared_weights=True, n_negatives=-1, splade_doc=False, model_q=None, 
                  adapter_name: str = None,
@@ -91,6 +98,7 @@ class TransformerRep(SpladeStart):
 
         self.adapter_config = adapter_config
         self.doc_encoder_adapter_name = adapter_name + "_rep" if adapter_name else None
+        # RV ?? 
         if load_adapter:
             print("Loading adapter {}".format(load_adapter))
             self.doc_encoder.load_adapter(load_adapter)
@@ -116,7 +124,7 @@ class TransformerRep(SpladeStart):
                 elif self.adapter_config == "compacter":
                     config = CompacterConfig()
                 else:
-                    raise ValueError('Adapter Config can be of type: 1. houlsby\n 2. pfeiffer\n 3.prefix_tuning\n')
+                    raise ValueError('Adapter Config can be of type: 1. houlsby\n 2. pfeiffer\n 3.prefix_tuning \n4. lora\n')
             elif isinstance(self.adapter_config, AdapterConfig):
                 config = self.adapter_config
             else:
@@ -192,33 +200,23 @@ class TransformerRep(SpladeStart):
             docs_result = output[:,1:,:]
         return queries_result,docs_result
 
-    # def save(self,output_dir, tokenizer):
-    #     if self.doc_encoder.active_adapters:
-    #         self.doc_encoder.save_all_adapters(output_dir)
-    #     else:
-    #         self.doc_encoder.save_pretrained(output_dir)
-    #     if tokenizer:
-    #         tokenizer.save_pretrained(output_dir)
-    #     if not self.shared_weights:
-    #         query_output_dir = os.path.join(output_dir,"query")
-    #         os.makedirs(query_output_dir, exist_ok=True)
-    #         if self.query_encoder.active_adapters:
-    #             self.query_encoder.save_all_adapters(os.path.join(output_dir,"query"))
-    #         else:
-    #             self.query_encoder.save_pretrained(query_output_dir)
-    #         if tokenizer:
-    #             tokenizer.save_pretrained(query_output_dir)
-
     def save(self,output_dir, tokenizer):
         #self.doc_encoder.save_pretrained(output_dir)
-        model_dict = self.doc_encoder.state_dict()
-        torch.save(model_dict, os.path.join(output_dir,  "pytorch_model.bin"))
-        self.doc_encoder.config.save_pretrained(output_dir)
+            #self.doc_encoder_adapter_name
+        if self.doc_encoder_adapter_name and self.doc_encoder.active_adapters:
+            self.doc_encoder.save_all_adapters(output_dir)
+        else:
+            model_dict = self.doc_encoder.state_dict()
+            torch.save(model_dict, os.path.join(output_dir,  "pytorch_model.bin"))
+            self.doc_encoder.config.save_pretrained(output_dir)
 
         if not self.shared_weights:
             query_output_dir = os.path.join(output_dir,"query")
             os.makedirs(query_output_dir, exist_ok=True)
-            self.query_encoder.save_pretrained(query_output_dir)
+            if self.doc_encoder_adapter_name and self.query_encoder.active_adapters:
+                self.query_encoder.save_all_adapters(query_output_dir)
+            else:
+                self.query_encoder.save_pretrained(query_output_dir)
             self.query_encoder.config.save_pretrained(query_output_dir)
             if tokenizer:
                 tokenizer.save_pretrained(query_output_dir)
@@ -226,30 +224,8 @@ class TransformerRep(SpladeStart):
         if tokenizer:
             tokenizer.save_pretrained(output_dir)
 
-        
-class SimplerSplade(SpladeStart):
 
-    def __init__(self, model_type_or_dir):
-        """
-        output indicates which representation(s) to output ('MLM' for MLM model)
-        model_type_or_dir is either the name of a pre-trained model (e.g. bert-base-uncased), or the path to
-        directory containing model weights, vocab etc.
-        """
-        super().__init__()
-        self.doc_encoder = AutoModelForMaskedLM.from_pretrained(model_type_or_dir)
-        self.shared_weights = False
-
-    def forward(self, **tokens):
-        output = self.doc_encoder(**tokens).logits
-        output = self.splade_max(output, tokens["attention_mask"])
-        return output
-
-    def save(self,output_dir, tokenizer):
-        self.doc_encoder.save_pretrained(output_dir)
-        if tokenizer:
-            tokenizer.save_pretrained(output_dir)
-
-class DenseRep(torch.nn.Module):
+class DPR(torch.nn.Module):
 
     def __init__(self, model_type_or_dir, shared_weights=True, n_negatives=-1, tokenizer=None, model_q=None, pooling='cls'):
         """

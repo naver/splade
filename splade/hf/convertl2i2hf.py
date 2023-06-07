@@ -71,13 +71,14 @@ def convert(exp_dict):
     #d.result_path
     
     if data.type == "hard_negatives":
-        d.scores = data.TRAIN.DATASET_PATH
+        d.training_data_path = data.TRAIN.DATASET_PATH
+        d.training_data_type = "pkl_dict"
         d.document_dir = os.path.join(data.TRAIN.D_COLLECTION_PATH,'raw.tsv') 
         d.query_dir = os.path.join(data.TRAIN.Q_COLLECTION_PATH,'raw.tsv')
         d.qrels_path = data.TRAIN.QREL_PATH
     elif data.type == "triplets":
-        # currently command line hf.data
-        pass
+        if d.training_data_path is None:
+            d.training_data_path = os.path.join(data.TRAIN_DATA_DIR,'raw.tsv')
 
     #d.negatives_path
     #d.n_negatives

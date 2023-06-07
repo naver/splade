@@ -64,101 +64,81 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
+    training_data_type:Optional[str] = field(
+        metadata={"help": "data format ()"},
+        default=None 
+    )
+    training_data_path: Optional[str] = field(
+        metadata={"help": "Path to training file"},
+        default=None
+    )
+
+    document_dir: str = field(
+        metadata={"help": "Path to collection file"},
+        default=None
+    )
+    query_dir: str = field(
+        metadata={"help": "Path to query file"},
+        default=None
+    )
+    qrels_path: str = field(
+        metadata={"help": "Path to qrels"},
+        default=None
+    )
+
     distillation: bool = field(
         metadata={"help": "Use distillation data"},
         default=False
     )
-    result_path: Optional[str] = field(
-        metadata={"help": "Path to result file"},
-        default=None
-#        default="/scratch/1/user/slupart/learn2index/exp/ALL/splade_distil_L1_splade_cocon/out_train/other_dataset/run.json"
-    )
-
-    scores: Optional[str] = field(
-        metadata={"help": "Path to score file"},
-        default=None
-#        default="/nfs/data/neuralsearch/msmarco/scores/cross-encoder-ms-marco-MiniLM-L-6-v2-scores.pkl.gz"
-    )
-
-    document_dir: str = field(
-        metadata={"help": "Path to doc file"},
-        default="/nfs/data/neuralsearch/msmarco/documents/raw.tsv"
-    )
-    query_dir: str = field(
-        metadata={"help": "Path to query file"},
-        default="/nfs/data/neuralsearch/msmarco/training_queries/raw.tsv"
-    )
-    qrels_path: str = field(
-        metadata={"help": "Path to qrels"},
-        default="/nfs/data/neuralsearch/msmarco/training_queries/qrels.json"
-    )
-
-    negatives_path: str = field(
-        metadata={"help": "Path to negatives"},
-        default=None,
-#        default="/scratch/1/user/classanc/test_reranker/final_negatives.pkl.gz",
-    )
-
 
     n_negatives: int = field(
         metadata={"help": "Negatives per query"},
-        default=7,
+        default=4,
     )
 
-    margin: int = field(
-        metadata={"help": "Margin to remove possible false negatives"},
-        default=3,
-    )
+
     n_queries: int = field(
         metadata={"help": "number of queries"},
         default=-1,
     )
 
 
-    top_k: int = field(
-        metadata={"help": "Top to filter"},
-        default=-1,
-    )
-
 
 
 @dataclass
 class LocalTrainingArguments(TrainingArguments):
     """
-    Arguments for training.
+    SPLADE Arguments for training.
     """
-
     output_dir: str = field(
+        # Rv: output of what ? reporting?
         metadata={"help": "Output path dir"},
-        default="models/t5-small/output"
+        default=None
     )
-
-    per_device_train_batch_size: int = field(
-        metadata={"help": "BS per device"},
-        default=2
-    )
-    
-    logging_steps: int = field(
-        metadata={"help": "Steps to log"},
-        default=10
-    )
-
     mse_margin: bool = field(
         metadata={"help": "Use mse margin for distillation"},
         default=False
     )
 
     l0d: float = field(
-        metadata={"help": "Use mse margin for distillation"},
+        metadata={"help": "lambda for document"},
         default=5e-4
     )
 
     l0q: float = field(
-        metadata={"help": "Use mse margin for distillation"},
+        metadata={"help": "lambda for query"},
         default=5e-4
     )
 
-    save_total_limit: int = field(
-        metadata={"help": "Total number of checkpoints to save. Deletes older checkpoints"},
-        default=-1
+    T_d: int = field(
+        metadata={"help": "Exponential FLOPS growth for lambda_d"},
+        default=0
     )
+
+    T_q: int = field(
+        metadata={"help": "Exponential FLOPS growth for lambda_q"},
+        default=0
+    )
+
+
+
