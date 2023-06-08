@@ -9,6 +9,7 @@ training:
   save_strategy: steps
   save_steps: 1000
   dataloader_drop_last: True
+  report_to: [ tensorboard ]
 model:
   dense: false
 data:
