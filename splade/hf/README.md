@@ -63,13 +63,13 @@ After training, indexing and retrieval can be launched with :
 
 ```
 
-INDYNIR_CONFIG_FULLPATH=$dir/chk/config.yaml python   -m src.index                    
+python   -m src.index  --config-path=$dir/chk   --config--name=config
 
-INDYNIR_CONFIG_FULLPATH=$dir/chk/config.yaml python   -m src.retrieve  
+python   -m src.retrieve  -config-path=$dir/chk   --config--name=config
 
 ```
 
 ## Example
 
-The config file `conf/config_f_distilbert.yaml` correcsponds to  a training with toy data
+The config file `conf/config_f_distilbert.yaml` corresponds to  a training with toy data
 
