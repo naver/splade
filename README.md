@@ -5,7 +5,8 @@
 [![weights](https://img.shields.io/badge/weights-splade-blue)](https://europe.naverlabs.com/research/machine-learning-and-optimization/splade-models/)
 
 ## What's New:
-* April 2023 We have removed the weights and pushed them to huggingface (https://huggingface.co/naver/splade_v2_max and https://huggingface.co/naver/splade_v2_distil) 
+* May 2023:  We add a new branch (based on HF Trainer) allowing training with several negatives : https://github.com/naver/splade/tree/hf
+* April 2023: We have removed the weights and pushed them to huggingface (https://huggingface.co/naver/splade_v2_max and https://huggingface.co/naver/splade_v2_distil) 
 
 
 
