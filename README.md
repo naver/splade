@@ -1,11 +1,13 @@
 # SPLADE
-
-**SP**arse **L**exical **A**n**D** **E**xpansion Model for First Stage Ranking
-
 [![paper](https://img.shields.io/badge/arxiv-arXiv%3A2107.05720-brightgreen)](https://arxiv.org/abs/2107.05720)
 [![blog](https://img.shields.io/badge/blog-splade-orange)](https://europe.naverlabs.com/blog/splade-a-sparse-bi-encoder-bert-based-model-achieves-effective-and-efficient-first-stage-ranking/)
 [![huggingface weights](https://img.shields.io/badge/huggingface-splade-9cf)](https://huggingface.co/naver)
 [![weights](https://img.shields.io/badge/weights-splade-blue)](https://europe.naverlabs.com/research/machine-learning-and-optimization/splade-models/)
+
+## What's New:
+* April 2023 We have removed the weights and pushed them to huggingface (https://huggingface.co/naver/splade_v2_max and https://huggingface.co/naver/splade_v2_distil) 
+
+
 
 <img src="./images/splade_figure.png" width="650">
 
@@ -43,9 +45,6 @@ to models doing intense query/doc expansion) with different properties and perfo
 *splade: a spork that is sharp along one edge or both edges, enabling it to be used as a knife, a fork and a spoon.*
 
 ***
-# What's New:
-* April 2023 We have removed the weights and pushed them to huggingface (https://huggingface.co/naver/splade_v2_max and https://huggingface.co/naver/splade_v2_distil) 
-
 
 # Getting started :rocket:
 
