@@ -1,0 +1,39 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: splade
+  - train/data: distil_from_ensemble
+  - train/model: splade
+############## INDEX ###################################
+  - index: msmarco
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+
+# Direct PARAMETER setting  SIGIR 23  CONFIG DENSE 32 NEG NO DISTILLATION
+config:
+  train_batch_size: 5
+  checkpoint_dir:  ??
+  index_dir: ??
+  out_dir: ??
+  fp16: true
+  hf_training: true
+  max_length: 128
+  config.lr: 2.0e-5 
+
+hf:
+  training:
+    resume_from_checkpoint: false
+    ddp_find_unused_parameters: false
+    fp16: true
+    logging_steps: 5000
+    save_strategy: epoch
+    dataloader_drop_last: True
+    num_train_epochs: 5
+    warmup_ratio: 0.01
+    mse_margin: false
+    weight_decay: 0
+  model:
+    dense: true
+    shared_weights: true
+  data:
+    distillation: false
+    n_negatives: 32
