@@ -201,6 +201,7 @@ class SPLADE(torch.nn.Module):
         return queries_result,docs_result
 
     def save(self,output_dir, tokenizer):
+
         #self.doc_encoder.save_pretrained(output_dir)
             #self.doc_encoder_adapter_name
         if self.doc_encoder_adapter_name and self.doc_encoder.active_adapters:
@@ -213,6 +214,7 @@ class SPLADE(torch.nn.Module):
         if not self.shared_weights:
             query_output_dir = os.path.join(output_dir,"query")
             os.makedirs(query_output_dir, exist_ok=True)
+
             if self.doc_encoder_adapter_name and self.query_encoder.active_adapters:
                 self.query_encoder.save_all_adapters(query_output_dir)
             else:

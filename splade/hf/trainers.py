@@ -54,6 +54,7 @@ class BaseTrainer(Trainer):
             del state_dict
             self._issue_warnings_after_load(load_result)
 
+
     def _save(self, output_dir, state_dict=None):
         ## SAVE CHECKPOINT !
         # If we are executing this function, we are the process zero, so we don't check for that.
@@ -68,6 +69,7 @@ class BaseTrainer(Trainer):
             self.model.save_pretrained(output_dir, state_dict=state_dict)
         if self.tokenizer is not None:
             self.tokenizer.save_pretrained(output_dir)
+
 
 
 class IRTrainer(BaseTrainer):
@@ -199,3 +201,4 @@ class IRTrainer(BaseTrainer):
             return loss
         else:
             return loss, [full_output]
+
