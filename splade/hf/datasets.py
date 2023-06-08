@@ -63,14 +63,15 @@ class L2I_Dataset(Dataset):
             print("Loading qrel: %s"%qrels_path, flush=True)
             with open(qrels_path) as reader:
                 self.qrels = json.load(reader)
-
             # select a subset of  queries 
             if nqueries > 0:
                 from itertools import islice
                 self.qrels = dict(islice(self.qrels.items(), nqueries))
         
             ### mapping to str ids   ###
-            self.qrels = {str(k):{str(k2):v2 for k2,v2 in v.items()} for k,v in self.qrels.items() }
+            self.qrels = {str(k):{str(k2):v2 for k2,v2 in v.items()} for k,v in self.qrels.items()  }
+            ### filtering non positives
+            self.qrels={k:{k2:v2 for k2,v2 in v.items() if int(v2)>=1} for k,v in self.qrels.items() }
         else:
             self.qrels = None
 
@@ -98,6 +99,7 @@ class L2I_Dataset(Dataset):
             with open(training_file_path) as reader:
                 for line in tqdm(reader):
                     qid, _, did, _, score, _ = line.split(" ")
+                    # if query subset used
                     if self.qrels is None  or str(qid) in self.qrels:
                         if str(qid) not in self.samples:
                             self.samples[str(qid)] = dict()
@@ -109,6 +111,7 @@ class L2I_Dataset(Dataset):
             with open(training_file_path) as reader:
                 self.result_path = json.load(reader)
             for qid, documents in tqdm(self.result_path.items()):
+                # if query subset used
                 if  self.qrels is None or str(qid) in self.qrels:
                     if str(qid) not in self.samples:
                         self.samples[str(qid)] = dict()
@@ -156,6 +159,7 @@ class L2I_Dataset(Dataset):
         scores = torch.tensor(scores)
         scores = scores.view(1,-1)
         return docs, scores
+    
 
 class TRIPLET_Dataset():
     """
@@ -164,12 +168,9 @@ class TRIPLET_Dataset():
 
     def __init__(self, data_dir):
         self.data_dir = data_dir
-        #RV used?
-        #self.id_style = "row_id"
 
         self.data_dict = {}  # => dict that maps the id to the line offset (position of pointer in the file)
         print("READING TRANING FILE (triplet)", flush=True)
-        # self.data_dir = os.path.join(self.data_dir, "raw.tsv")
         with open(self.data_dir) as reader:
             for i, line in enumerate(tqdm(reader)):
                 if len(line) > 1:

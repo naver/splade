@@ -1,7 +1,10 @@
 import torch
 from transformers import AutoModelForMaskedLM, AutoModel
+from transformers.trainer import  logger
+from transformers import PreTrainedModel
 import os
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List
+
 try:
     from transformers.adapters.configuration import AdapterConfig
     from transformers.adapters import (
@@ -45,6 +48,10 @@ class SpladeDoc(torch.nn.Module):
         q_bow[:, self.sep_id] = 0  # otherwise the pad tok is in bow
         return q_bow
      
+    def _save(self, output_dir, state_dict=None):
+        ## SAVE CHECKPOINT !
+        pass    
+
 class SPLADE(torch.nn.Module):
     
     @staticmethod
@@ -194,8 +201,6 @@ class SPLADE(torch.nn.Module):
         return queries_result,docs_result
 
     def save(self,output_dir, tokenizer):
-        #self.doc_encoder.save_pretrained(output_dir)
-            #self.doc_encoder_adapter_name
         if self.doc_encoder_adapter_name and self.doc_encoder.active_adapters:
             self.doc_encoder.save_all_adapters(output_dir)
         else:
