@@ -4,6 +4,7 @@ from transformers import PreTrainedModel
 import torch
 import os
 import numpy as np
+from splade.utils.utils import generate_bow, clean_bow, pruning
 
 
 class BaseTrainer(Trainer):
@@ -20,12 +21,7 @@ class BaseTrainer(Trainer):
     def _L0(batch_rep):
         return torch.count_nonzero(batch_rep, dim=-1).float().mean()
 
-    @staticmethod
-    def splade_max(output, attention_mask):
-        # tokens: output of a huggingface tokenizer
-        relu = torch.nn.ReLU(inplace=False)
-        values, _ = torch.max(torch.log(1 + relu(output)) * attention_mask.unsqueeze(-1), dim=1)
-        return values
+
 
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         if model is None:
@@ -83,6 +79,10 @@ class IRTrainer(BaseTrainer):
         self.lambda_q = self.args.l0q
         self.T_d = self.args.T_d
         self.T_q = self.args.T_q
+        self.top_d = self.args.top_d
+        self.top_q = self.args.top_q
+        self.lexical_type = self.args.lexical_type #(none, document, query, both)
+        assert self.lexical_type in ("none", "document","query","both")
         self.last_celoss = list()
         self.last_distilloss = list()
         self.last_flops = list()
@@ -95,6 +95,16 @@ class IRTrainer(BaseTrainer):
         self.step = 0
         self.dense = dense
         self.distillation=distillation
+        if self.tokenizer:
+            self.pad_token = self.tokenizer.special_tokens_map["pad_token"]
+            self.cls_token = self.tokenizer.special_tokens_map["cls_token"]
+            self.sep_token = self.tokenizer.special_tokens_map["sep_token"]
+            self.mask_token = self.tokenizer.special_tokens_map["mask_token"]
+            self.pad_id = self.tokenizer.vocab[self.pad_token]
+            self.cls_id = self.tokenizer.vocab[self.cls_token]
+            self.sep_id = self.tokenizer.vocab[self.sep_token]
+            self.mask_id = self.tokenizer.vocab[self.mask_token]
+
 
 
     def log(self, logs: Dict[str, float]) -> None:
@@ -143,8 +153,28 @@ class IRTrainer(BaseTrainer):
         del inputs["scores"]
 
         self.compute_lambdas()
-        full_output = model(**inputs)
-        queries, docs = full_output # shape (bsz, 1, Vocab), (bsz, nb_neg+1, Vocab)
+        queries, docs = model(**inputs) # shape (bsz, 1, Vocab), (bsz, nb_neg+1, Vocab)
+        if self.lexical_type != "none":
+            #input_ids = inputs["input_ids"].view(-1,self.n_negatives+2,inputs['input_ids'].size(1)) #(bsz, nb_neg+2, seq_length)
+            input_ids = inputs["input_ids"].reshape(-1,self.n_negatives+2,inputs['input_ids'].size(1)) #(bsz, nb_neg+2, seq_length)
+            doc_ids = input_ids[:,1:,:].reshape(-1,input_ids.size(-1)) # (bsz, seq_length)
+            query_ids = input_ids[:,:1,:].reshape(-1,input_ids.size(-1)) # (bsz*(nb_neg+1), seq_length)
+            doc_bow = generate_bow(doc_ids,docs.size(-1), device=doc_ids.device)
+            doc_bow = clean_bow(doc_bow, pad_id = self.pad_id, cls_id=self.cls_id, sep_id=self.sep_id, mask_id=self.mask_id)
+            query_bow = generate_bow(query_ids,queries.size(-1), device=query_ids.device)
+            query_bow = clean_bow(query_bow, pad_id = self.pad_id, cls_id=self.cls_id, sep_id=self.sep_id, mask_id=self.mask_id)
+            if self.lexical_type == "query" or self.lexical_type == "both":
+                queries = queries * query_bow.view(-1, 1, doc_bow.size(-1))
+            if self.lexical_type == "document" or self.lexical_type == "both":
+                docs = docs * doc_bow.view(-1, self.n_negatives+1, doc_bow.size(-1))
+
+        if self.top_d > 0:
+            docs = pruning(docs, self.top_d,2)
+
+        if self.top_q > 0:
+            queries = pruning(queries, self.top_q,2)
+
+
         scores = torch.bmm(queries,torch.permute(docs,[0,2,1])).squeeze(1) # shape (bsz, nb_neg+1)
         scores_positive = scores[:,:1] # shape (bsz, 1)
         negatives = docs[:,1:,:].reshape(-1,docs.size(2)).T # shape (Vocab, bsz*nb_neg)
@@ -198,4 +228,4 @@ class IRTrainer(BaseTrainer):
         if not return_outputs:
             return loss
         else:
-            return loss, [full_output]
+            return loss, [(queries, docs)]

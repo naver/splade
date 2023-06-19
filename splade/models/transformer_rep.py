@@ -4,7 +4,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel
 
 from ..tasks.amp import NullContextManager
-from ..utils.utils import generate_bow, normalize
+from ..utils.utils import generate_bow, clean_bow, normalize, pruning
 
 """
 we provide abstraction classes from which we can easily derive representation-based models with transformers like SPLADE
@@ -192,3 +192,86 @@ class SpladeDoc(SiameseBase):
                 values, _ = torch.max(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
                 return values
                 # 0 masking also works with max because all activations are positive
+
+
+class SpladeTopK(SiameseBase):
+    """
+    model with topk 
+    """
+
+    def __init__(self, model_type_or_dir, model_type_or_dir_q=None,
+                 freeze_d_model=False, agg="max",fp16=False, output='MLM', top_d=32, top_q=5, **kwargs):
+        super().__init__(model_type_or_dir=model_type_or_dir,
+                         output=output,
+                         match='dot_product',
+                         model_type_or_dir_q=model_type_or_dir_q,
+                         freeze_d_model=freeze_d_model,fp16=fp16,
+                         **kwargs)
+        self.output_dim = self.transformer_rep.transformer.config.vocab_size  # output dim = vocab size
+        assert agg in ("sum", "max","cls")
+        self.agg = agg
+        self.top_d = top_d # If -1 no threshold
+        self.top_q = top_q
+
+    def encode(self, tokens, is_q):
+        out = self.encode_(tokens, is_q)['logits']  # shape (bs, pad_len, voc_size)
+        if self.agg == "sum":
+            rep = torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+        elif self.agg == "cls":
+            rep = (torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1))[:, 0, :]
+        else:
+            values, _ = torch.max(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+            rep = values
+        top_local = self.top_q if is_q else self.top_d
+        if top_local > 0: # If -1 no threshold
+            return pruning(rep,top_local,len(rep.size())-1)
+        else:
+            return rep
+
+class SpladeLexical(SiameseBase):
+    """
+    document expansion model with weigthed query
+    """
+
+    def __init__(self, model_type_or_dir, model_type_or_dir_q=None,
+                 freeze_d_model=False, lexical_type="query", agg="sum",fp16=False):
+        super().__init__(model_type_or_dir=model_type_or_dir,
+                         output='MLM',
+                         match='dot_product',
+                         model_type_or_dir_q=model_type_or_dir_q,
+                         freeze_d_model=freeze_d_model,fp16=fp16)
+        self.output_dim = self.transformer_rep.transformer.config.vocab_size
+        self.pad_token = self.transformer_rep.tokenizer.special_tokens_map["pad_token"]
+        self.cls_token = self.transformer_rep.tokenizer.special_tokens_map["cls_token"]
+        self.sep_token = self.transformer_rep.tokenizer.special_tokens_map["sep_token"]
+        self.mask_token = self.transformer_rep.tokenizer.special_tokens_map["mask_token"]
+        self.pad_id = self.transformer_rep.tokenizer.vocab[self.pad_token]
+        self.cls_id = self.transformer_rep.tokenizer.vocab[self.cls_token]
+        self.sep_id = self.transformer_rep.tokenizer.vocab[self.sep_token]
+        self.mask_id = self.transformer_rep.tokenizer.vocab[self.mask_token]
+        assert agg in ("sum", "max","cls")
+        self.agg = agg
+        self.lexical_type = lexical_type
+        assert lexical_type in ("query","document","both")
+
+    def encode(self, tokens, is_q):
+        bow = generate_bow(tokens["input_ids"], self.output_dim, device=tokens["input_ids"].device)
+        bow = clean_bow(bow, pad_id = self.pad_id, cls_id=self.cls_id, sep_id=self.sep_id, mask_id=self.mask_id)
+
+        out = self.encode_(tokens, is_q)['logits']  # shape (bs, pad_len, voc_size)
+        if self.agg == "sum":
+            rep = torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+        elif self.agg == "cls":
+            rep = (torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1))[:, 0, :]
+        else:
+            rep = torch.max(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1).values
+        
+        if self.lexical_type == "both":
+            rep = rep * bow
+        elif is_q and self.lexical_type == "query": # If lexical is query and is query
+            rep = rep * bow
+        elif not is_q and self.lexical_type == "document": # If lexical is document and is document
+            rep = rep * bow
+
+        return rep
+

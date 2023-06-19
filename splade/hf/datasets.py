@@ -63,6 +63,7 @@ class L2I_Dataset(Dataset):
             print("Loading qrel: %s"%qrels_path, flush=True)
             with open(qrels_path) as reader:
                 self.qrels = json.load(reader)
+                
             # select a subset of  queries 
             if nqueries > 0:
                 from itertools import islice
@@ -92,8 +93,10 @@ class L2I_Dataset(Dataset):
             with gzip.open(training_file_path, 'rb') as fIn:
                 self.samples = pickle.load(fIn)
                 # cast int into str for qids/dids
-                self.samples = {str(k):{str(k2):v2 for k2,v2 in v.items()} for k,v in self.samples.items() if str(k) in self.qrels}
+                # and filter out ig not enough negatives 
+                self.samples = {str(k):{str(k2):v2 for k2,v2 in v.items()} for k,v in self.samples.items() if ( str(k) in self.qrels and len(v.keys()) >  len(self.qrels[str(k)]) )}
 
+                  
         elif training_data_type == 'trec':
             #data_type:trec
             with open(training_file_path) as reader:
@@ -136,6 +139,7 @@ class L2I_Dataset(Dataset):
         positives = list(self.qrels[query].keys())
         
         candidates = [x for x in self.samples[query] if x not in positives]
+
         positive = random.sample(positives,1)[0]
 
         if len(candidates) <= self.n_negatives:
@@ -170,7 +174,7 @@ class TRIPLET_Dataset():
         self.data_dir = data_dir
 
         self.data_dict = {}  # => dict that maps the id to the line offset (position of pointer in the file)
-        print("READING TRANING FILE (triplet)", flush=True)
+        print("READING TRANING FILE (triplet): %s"%(data_dir), flush=True)
         with open(self.data_dir) as reader:
             for i, line in enumerate(tqdm(reader)):
                 if len(line) > 1:

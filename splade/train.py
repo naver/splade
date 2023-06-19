@@ -17,7 +17,7 @@ from .tasks.transformer_trainer import SiameseTransformerTrainer
 from .utils.utils import set_seed, restore_model, get_initialize_config, get_loss, set_seed_from_config
 
 
-@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
+@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME, version_base="1.2")
 def train(exp_dict: DictConfig):
     exp_dict, config, init_dict, _ = get_initialize_config(exp_dict, train=True)
     model = get_model(config, init_dict)

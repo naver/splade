@@ -10,7 +10,7 @@ from .tasks.transformer_evaluator import SparseIndexing
 from .utils.utils import get_initialize_config
 
 
-@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
+@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME, version_base="1.2")
 def index(exp_dict: DictConfig):
     exp_dict, config, init_dict, model_training_config = get_initialize_config(exp_dict)
 

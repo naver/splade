@@ -11,7 +11,7 @@ from .tasks.transformer_evaluator import SparseRetrieval
 from .utils.utils import get_dataset_name, get_initialize_config
 
 
-@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
+@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME, version_base="1.2")
 def retrieve_evaluate(exp_dict: DictConfig):
     exp_dict, config, init_dict, model_training_config = get_initialize_config(exp_dict)
 

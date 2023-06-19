@@ -4,6 +4,7 @@ from transformers.trainer import  logger
 from transformers import PreTrainedModel
 import os
 from typing import Dict, List
+from splade.utils.utils import generate_bow, clean_bow
 
 try:
     from transformers.adapters.configuration import AdapterConfig
@@ -18,36 +19,24 @@ except ImportError: print('no adapter version')
 
 class SpladeDoc(torch.nn.Module):
 
-    @staticmethod
-    def generate_bow(input_ids, output_dim, values=None):
-        """from a batch of input ids, generates batch of bow rep
-        """
-        bs = input_ids.shape[0]
-        bow = torch.zeros(bs, output_dim).to(input_ids.device)
-        if values is None:
-            bow[torch.arange(bs).unsqueeze(-1), input_ids] = 1
-        else:
-            bow[torch.arange(bs).unsqueeze(-1), input_ids] = values
-        return bow
-
     def __init__(self, tokenizer,output_dim):
         super().__init__()
         self.tokenizer = tokenizer
         self.pad_token = self.tokenizer.special_tokens_map["pad_token"]
         self.cls_token = self.tokenizer.special_tokens_map["cls_token"]
         self.sep_token = self.tokenizer.special_tokens_map["sep_token"]
+        self.mask_token = self.tokenizer.special_tokens_map["mask_token"]
         self.pad_id = self.tokenizer.vocab[self.pad_token]
         self.cls_id = self.tokenizer.vocab[self.cls_token]
         self.sep_id = self.tokenizer.vocab[self.sep_token]
+        self.mask_id = self.tokenizer.vocab[self.mask_token]
         self.output_dim = output_dim
 
     def forward(self, **tokens):
-        q_bow = self.generate_bow(tokens["input_ids"], self.output_dim)
-        q_bow[:, self.pad_id] = 0  # otherwise the pad tok is in bow
-        q_bow[:, self.cls_id] = 0  # otherwise the pad tok is in bow
-        q_bow[:, self.sep_id] = 0  # otherwise the pad tok is in bow
+        q_bow = generate_bow(tokens["input_ids"], self.output_dim, device=tokens["input_ids"].device)
+        q_bow = clean_bow(q_bow, pad_id = self.pad_id, cls_id=self.cls_id, sep_id=self.sep_id, mask_id=self.mask_id)
         return q_bow
-     
+
     def _save(self, output_dir, state_dict=None):
         ## SAVE CHECKPOINT !
         pass    
@@ -57,15 +46,21 @@ class SPLADE(torch.nn.Module):
     @staticmethod
     def splade_max(output, attention_mask):
         # tokens: output of a huggingface tokenizer
+        output = output.logits
         relu = torch.nn.ReLU(inplace=False)
         values, _ = torch.max(torch.log(1 + relu(output)) * attention_mask.unsqueeze(-1), dim=1)
         return values
+
+    @staticmethod
+    def passthrough(output, attention_mask):
+        # tokens: output of a huggingface tokenizer
+        return output
+
 
     def __init__(self, model_type_or_dir, tokenizer=None, shared_weights=True, n_negatives=-1, splade_doc=False, model_q=None, 
                  adapter_name: str = None,
                  adapter_config: str = None, #,Union[str, AdapterConfig] = None, 
                  load_adapter: str = None,
-
                  **kwargs):
         """
         output indicates which representation(s) to output ('MLM' for MLM model)
@@ -83,6 +78,9 @@ class SPLADE(torch.nn.Module):
 
         self.n_negatives = n_negatives
         self.splade_doc = splade_doc
+        self.doc_activation = self.splade_max
+        self.query_activation = self.splade_max if not self.splade_doc else self.passthrough
+
         if splade_doc:
             self.query_encoder = SpladeDoc(tokenizer=tokenizer,output_dim=self.doc_encoder.config.vocab_size)
             self.query_encoder_adapter_name = adapter_name + "_rep_q" if adapter_name else None
@@ -171,36 +169,31 @@ class SPLADE(torch.nn.Module):
 
 
     def forward(self, **tokens):
+
         if not self.shared_weights or self.splade_doc:
             attention_mask = tokens["attention_mask"]
-            input_ids = tokens["input_ids"]
-            input_ids = input_ids.view(-1,self.n_negatives+2,input_ids.size(1))
+            input_ids = tokens["input_ids"] ##(bsz * (nb_neg+2) , seq_length)
+            input_ids = input_ids.view(-1,self.n_negatives+2,input_ids.size(1)) ##(bsz, nb_neg+2 , seq_length)
             attention_mask = attention_mask.view(-1,self.n_negatives+2,attention_mask.size(1))
-            docs_ids = input_ids[:,1:,:].reshape(-1,input_ids.size(2))
+            docs_ids = input_ids[:,1:,:].reshape(-1,input_ids.size(2)) ##(bsz * (nb_neg+1) , seq_length)
             docs_attention = attention_mask[:,1:,:].reshape(-1,attention_mask.size(2))
-            queries_ids = input_ids[:,:1,:].reshape(-1,input_ids.size(2))
+            queries_ids = input_ids[:,:1,:].reshape(-1,input_ids.size(2))  ##(bsz * (1) , seq_length)
             queries_attention = attention_mask[:,:1,:].reshape(-1,attention_mask.size(2))
 
-            query_result = self.query_encoder(input_ids=queries_ids,attention_mask=queries_attention)
-            if not self.splade_doc:
-                query_result = query_result.logits
-                queries_result = self.splade_max(query_result,queries_attention)
-            else:
-                queries_result = query_result
-            queries_result = queries_result.view(-1,1,queries_result.size(1))
-
-            docs_result = self.doc_encoder(input_ids=docs_ids,attention_mask=docs_attention).logits
-            docs_result = self.splade_max(docs_result,docs_attention)
-            docs_result = docs_result.view(-1,self.n_negatives+1,docs_result.size(1))
+            queries_result = self.query_activation(self.query_encoder(input_ids=queries_ids,attention_mask=queries_attention), attention_mask=queries_attention)
+            queries_result = queries_result.view(-1,1,queries_result.size(1))  ##(bsz, (1) , Vocab)
+            docs_result = self.doc_activation(self.doc_encoder(input_ids=docs_ids,attention_mask=docs_attention),attention_mask=docs_attention)
+            docs_result = docs_result.view(-1,self.n_negatives+1,docs_result.size(1))  ####(bsz, (nb_neg+1) , Vocab)
         else:
-            output = self.doc_encoder(**tokens).logits
-            output = self.splade_max(output, tokens["attention_mask"])
-            output = output.view(-1,self.n_negatives+2,output.size(1))
+            representations = self.doc_activation(self.doc_encoder(**tokens),attention_mask=tokens["attention_mask"]) #TODO This should separate docs and queries and use their separate activations, for now is not a problem because they will always be the same if we are here.
+            output = representations.view(-1,self.n_negatives+2,representations.size(1))
             queries_result = output[:,:1,:]
             docs_result = output[:,1:,:]
         return queries_result,docs_result
 
     def save(self,output_dir, tokenizer):
+        #self.doc_encoder.save_pretrained(output_dir)
+            #self.doc_encoder_adapter_name
         if self.doc_encoder_adapter_name and self.doc_encoder.active_adapters:
             self.doc_encoder.save_all_adapters(output_dir)
         else:

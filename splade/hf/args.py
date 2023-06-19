@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Literal
 
 from transformers import TrainingArguments
 
@@ -65,7 +65,7 @@ class DataTrainingArguments:
     """
 
     training_data_type:Optional[str] = field(
-        metadata={"help": "data format ()"},
+        metadata={"help": "data format (json, pkl_dict, saved_pkl, trec, triplets)"},
         default=None 
     )
     training_data_path: Optional[str] = field(
@@ -140,5 +140,19 @@ class LocalTrainingArguments(TrainingArguments):
         default=0
     )
 
+    top_d: int = field(
+        metadata={"help": "TOP_k document pruning"},
+        default=-1
+    )
+
+    top_q: int = field(
+        metadata={"help": "TOP_k query pruning"},
+        default=-1
+    )
+
+    lexical_type: str = field(
+        metadata={"help": "Type of splade lexical to do: none, document, query or both"},
+        default="none",
+    )
 
 

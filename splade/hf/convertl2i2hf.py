@@ -33,7 +33,8 @@ def convert(exp_dict):
         setattr(m,k, hf.model[k])
 
     #will overwrite default/hf.yaml values    
-    m.max_length = config.max_length
+    try:m.max_length = config.max_length
+    except:pass
     #m.shared_weights = 
     #m.splade_doc = 
     m.model_q = init_dict.model_type_or_dir_q
@@ -47,7 +48,6 @@ def convert(exp_dict):
         m.adapter_name = config.adapter_name
         m.adapter_config = config.adapter_config
     except : pass # no adapter
-    #m.load_adapter = ??
 
 
 
@@ -69,18 +69,25 @@ def convert(exp_dict):
 
     for k in hf.data.keys():
         setattr(d,k, hf.data[k])
+
+
     #will overwrite default/hf.yaml values    
-    
-    if data.type == "hard_negatives":
-        d.training_data_path = data.TRAIN.DATASET_PATH
-        d.training_data_type = "pkl_dict"
-        d.document_dir = os.path.join(data.TRAIN.D_COLLECTION_PATH,'raw.tsv') 
-        d.query_dir = os.path.join(data.TRAIN.Q_COLLECTION_PATH,'raw.tsv')
-        d.qrels_path = data.TRAIN.QREL_PATH
-    elif data.type == "triplets":
+    # "type"  provided by train/data
+    if d.training_data_type == 'triplets':
+        assert d.n_negatives == 1
         if d.training_data_path is None:
             d.training_data_path = os.path.join(data.TRAIN_DATA_DIR,'raw.tsv')
+    elif "type"  in data:
+        if data.type == "hard_negatives": 
+            d.training_data_path = data.TRAIN.DATASET_PATH
+            d.training_data_type = "pkl_dict"
+            d.document_dir = os.path.join(data.TRAIN.D_COLLECTION_PATH,'raw.tsv') 
+            d.query_dir = os.path.join(data.TRAIN.Q_COLLECTION_PATH,'raw.tsv')
+            d.qrels_path = data.TRAIN.QREL_PATH
+        
 
+    assert d.training_data_type in ['saved_pkl','pkl_dict','trec','json','triplets']
+    
 
     ############  training ############
     for k in hf.training.keys():
@@ -91,37 +98,31 @@ def convert(exp_dict):
             setattr(t,k, hf.training[k])
     
     #will overwrite default/hf.yaml values    
-    t.learning_rate = config.lr
     t.output_dir =  config.checkpoint_dir  
-    #t.logging_dir = 
-    t.per_device_train_batch_size =config.train_batch_size
-    t.seed=config.seed
-    t.fp16=init_dict.fp16
-    #t.logging_steps = 
-    #t.mse_margin = 
-
-    ## nb_iterations  ->  learning_rate   
-
+    t.fp16=config.fp16
+    if 'lr' in config: t.learning_rate = config.lr
+    if 'train_batch_size' in config:t.per_device_train_batch_size =config.train_batch_size
+    if "seed" in config: t.seed=config.seed
+   
 
     if not m.dense:
-       # here what if not l1q
-        t.l0d = config.regularizer.FLOPS.lambda_d
-        try:
-            t.T_d = config.regularizer.FLOPS.T 
-        except:
-            t.T_d = 0
-        try: 
-            t.l0q = config.regularizer.L1.lambda_q
-            t.T_q = config.regularizer.L1.T
-        except: # omegaconf.errors.ConfigKeyError
+        if 'regularizer' in config:
+            # here what if not l1q
+            t.l0d = config.regularizer.FLOPS.lambda_d
             try:
-                t.l0q = config.regularizer.FLOPS.lambda_q
-                t.l0q = config.regularizer.FLOPS.T
+                t.T_d = config.regularizer.FLOPS.T 
             except:
-                t.l0q = t.l0d
-                t.T_q = t.T_d
-    #t.save_total_limit
-
+                t.T_d = 0
+            try: 
+                t.l0q = config.regularizer.L1.lambda_q
+                t.T_q = config.regularizer.L1.T
+            except: # omegaconf.errors.ConfigKeyError
+                try:
+                    t.l0q = config.regularizer.FLOPS.lambda_q
+                    t.l0q = config.regularizer.FLOPS.T
+                except:
+                    t.l0q = t.l0d
+                    t.T_q = t.T_d
 
     return m, d, t
 

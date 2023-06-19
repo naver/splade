@@ -19,7 +19,7 @@ from splade.hf.convertl2i2hf import convert
 from splade.utils.utils import get_initialize_config
 
 
-@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
+@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME, version_base="1.2")
 def hf_train(exp_dict: DictConfig):
 
     # mapping yaml/hydra conf into HF data structure
