@@ -13,7 +13,7 @@ class PairsDatasetPreLoadSmallTriplets(Dataset):
     we preload everything in memory at init
     """
 
-    def __init__(self, data_dir, id_to_text):
+    def __init__(self, data_dir, id_to_doc_text, id_to_query_text):
         self.data_dir = data_dir
         self.id_style = "row_id"
 
@@ -23,9 +23,10 @@ class PairsDatasetPreLoadSmallTriplets(Dataset):
         with open(self.data_dir) as reader:
             for i, line in enumerate(tqdm(reader)):
                 if len(line) > 1:
-                    query, pos_id, neg_id = line.split("\t")  # first column is id
-                    pos = id_to_text[pos_id]
-                    neg = id_to_text[neg_id]
+                    query_id, pos_id, neg_id = line.split("\t")  # first column is id
+                    query = id_to_query_text[query_id]
+                    pos = id_to_doc_text[pos_id]
+                    neg = id_to_doc_text[neg_id]
                     self.data_dict[i] = (query.strip(), pos.strip(), neg.strip())
         self.nb_ex = len(self.data_dict)
 

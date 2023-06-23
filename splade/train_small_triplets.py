@@ -99,16 +99,10 @@ def train(exp_dict: DictConfig):
 
     if exp_dict["data"].get("type", "") == "triplets":
         data_dir = exp_dict["data"]["TRAIN_DATA_DIR"]
-        map_id_to_text = dict()
+        map_id_to_doc_text = get_map_id_to_text(data_dir, 'corpus.tsv')
+        map_id_to_query_text = get_map_id_to_text(data_dir, 'queries.tsv')
 
-        with open(os.path.join(data_dir, 'corpus.tsv'), 'r') as file:
-            for line in file:
-                fields = line.split('\t')
-                id = fields[0]
-                text = fields[1]
-                map_id_to_text[id] = text
-
-        data_train = PairsDatasetPreLoadSmallTriplets(data_dir, map_id_to_text)
+        data_train = PairsDatasetPreLoadSmallTriplets(data_dir, map_id_to_doc_text, map_id_to_query_text)
 
         train_mode = "triplets"
     elif exp_dict["data"].get("type", "") == "triplets_with_distil":
@@ -198,6 +192,17 @@ def train(exp_dict: DictConfig):
                                         validation_evaluator=val_evaluator,
                                         regularizer=regularizer)
     trainer.train()
+
+
+def get_map_id_to_text(data_dir, tsv):
+    map_id_to_text = dict()
+    with open(os.path.join(data_dir, tsv), 'r') as file:
+        for line in file:
+            fields = line.split('\t')
+            id = fields[0]
+            text = fields[1]
+            map_id_to_text[id] = text
+    return map_id_to_text
 
 
 if __name__ == "__main__":
