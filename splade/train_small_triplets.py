@@ -16,7 +16,6 @@ from .tasks.transformer_evaluator import SparseApproxEvalWrapper
 from .tasks.transformer_trainer import SiameseTransformerTrainer
 from .utils.utils import set_seed, restore_model, get_initialize_config, get_loss, set_seed_from_config
 
-
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
 def train(exp_dict: DictConfig):
     exp_dict, config, init_dict, _ = get_initialize_config(exp_dict, train=True)
@@ -99,7 +98,18 @@ def train(exp_dict: DictConfig):
         drop_last = False
 
     if exp_dict["data"].get("type", "") == "triplets":
-        data_train = PairsDatasetPreLoadSmallTriplets(data_dir=exp_dict["data"]["TRAIN_DATA_DIR"])
+        data_dir = exp_dict["data"]["TRAIN_DATA_DIR"]
+        map_id_to_text = dict()
+
+        with open(os.path.join(data_dir, 'corpus.tsv'), 'r') as file:
+            for line in file:
+                fields = line.split('\t')
+                id = fields[0]
+                text = fields[1]
+                map_id_to_text[id] = text
+
+        data_train = PairsDatasetPreLoadSmallTriplets(data_dir, map_id_to_text)
+
         train_mode = "triplets"
     elif exp_dict["data"].get("type", "") == "triplets_with_distil":
         data_train = DistilPairsDatasetPreLoad(data_dir=exp_dict["data"]["TRAIN_DATA_DIR"])
