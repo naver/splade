@@ -160,7 +160,7 @@ class Splade(SiameseBase):
             return values
             # 0 masking also works with max because all activations are positive
 
-class SpladeT5(Splade):
+class SpladeT5(SiameseBase):
     def __init__(self, model_type_or_dir, model_type_or_dir_q=None, freeze_d_model=False, agg="max", fp16=True):
         super().__init__(model_type_or_dir=model_type_or_dir,
                          output="t5",
@@ -172,6 +172,14 @@ class SpladeT5(Splade):
         assert agg in ("sum", "max")
         self.agg = agg
 
+    def encode(self, tokens, is_q):
+        out = self.encode_(tokens, is_q)["logits"]  # shape (bs, pad_len, voc_size)
+        if self.agg == "sum":
+            return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+        else:
+            values, _ = torch.max(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+            return values
+            # 0 masking also works with max because all activations are positive
 
 class SpladeDoc(SiameseBase):
     """SPLADE without query encoder
