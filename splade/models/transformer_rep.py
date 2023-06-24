@@ -153,7 +153,6 @@ class Splade(SiameseBase):
 
     def encode(self, tokens, is_q):
         encoded = self.encode_(tokens, is_q)
-        print("%%%%%%%%% encoded = ", encoded)
         out = encoded["logits"]  # shape (bs, pad_len, voc_size)
         if self.agg == "sum":
             return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
@@ -176,8 +175,8 @@ class SpladeT5(SiameseBase):
 
     def encode(self, tokens, is_q):
         encoded = self.encode_(tokens, is_q)
-        print("%%%%%%%%% encoded = ", encoded)
-        out = encoded["logits"]  # shape (bs, pad_len, voc_size)
+        #out = encoded["logits"]  # shape (bs, pad_len, voc_size)
+        out = encoded[0] # hiddden states
         if self.agg == "sum":
             return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
         else:
