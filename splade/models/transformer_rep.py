@@ -173,7 +173,9 @@ class SpladeT5(SiameseBase):
         self.agg = agg
 
     def encode(self, tokens, is_q):
-        out = self.encode_(tokens, is_q)["logits"]  # shape (bs, pad_len, voc_size)
+        encoded = self.encode_(tokens, is_q)
+        print("%%%%%%%%% encodedn = ", encoded)
+        out = encoded["logits"]  # shape (bs, pad_len, voc_size)
         if self.agg == "sum":
             return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
         else:
