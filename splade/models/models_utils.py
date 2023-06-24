@@ -1,6 +1,6 @@
 from omegaconf import DictConfig
 
-from ..models.transformer_rep import Splade, SpladeDoc
+from ..models.transformer_rep import Splade, SpladeDoc, SpladeT5
 
 
 def get_model(config: DictConfig, init_dict: DictConfig):
@@ -9,7 +9,8 @@ def get_model(config: DictConfig, init_dict: DictConfig):
 
     model_map = {
         "splade": Splade,
-        "splade_doc": SpladeDoc
+        "splade_doc": SpladeDoc,
+        "splade_t5": SpladeT5
     }
     try:
         model_class = model_map[config["matching_type"]]
