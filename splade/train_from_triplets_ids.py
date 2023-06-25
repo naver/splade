@@ -6,8 +6,8 @@ from omegaconf import DictConfig, open_dict
 from torch.utils import data
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from .datasets.dataloaders import CollectionDataLoader, SiamesePairsDataLoader, DistilSiamesePairsDataLoader
-from .datasets.datasets import PairsDatasetPreLoadSmallTriplets, DistilPairsDatasetPreLoad, MsMarcoHardNegatives, \
+from .datasets.dataloaders import CollectionDataLoader, SiamesePairsDataLoader, DistilSiamesePairsDataLoader, SiamesePairsDataLoaderTripletsIds
+from .datasets.datasets import PairsDatasetPreLoad, DistilPairsDatasetPreLoad, MsMarcoHardNegatives, \
     CollectionDatasetPreLoad
 from .losses.regularization import init_regularizer, RegWeightScheduler
 from .models.models_utils import get_model
@@ -15,6 +15,7 @@ from .optim.bert_optim import init_simple_bert_optim
 from .tasks.transformer_evaluator import SparseApproxEvalWrapper
 from .tasks.transformer_trainer import SiameseTransformerTrainer
 from .utils.utils import set_seed, restore_model, get_initialize_config, get_loss, set_seed_from_config
+
 
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
 def train(exp_dict: DictConfig):
@@ -98,12 +99,9 @@ def train(exp_dict: DictConfig):
         drop_last = False
 
     if exp_dict["data"].get("type", "") == "triplets":
-        data_dir = exp_dict["data"]["TRAIN_DATA_DIR"]
-        map_id_to_doc_text = get_map_id_to_text(data_dir, 'corpus.tsv')
-        map_id_to_query_text = get_map_id_to_text(data_dir, 'queries.tsv')
-
-        data_train = PairsDatasetPreLoadSmallTriplets(data_dir, map_id_to_doc_text, map_id_to_query_text)
-
+        map_id_to_doc_text = get_map_id_to_text(exp_dict["data"]["TRAIN_DATA_DIR"], 'corpus.tsv')
+        map_id_to_query_text = get_map_id_to_text(exp_dict["data"]["TRAIN_DATA_DIR"], 'queries_train.tsv')    
+        data_train = PairsDatasetPreLoad(data_dir=exp_dict["data"]["TRAIN_DATA_DIR"])
         train_mode = "triplets"
     elif exp_dict["data"].get("type", "") == "triplets_with_distil":
         data_train = DistilPairsDatasetPreLoad(data_dir=exp_dict["data"]["TRAIN_DATA_DIR"])
@@ -127,11 +125,17 @@ def train(exp_dict: DictConfig):
             exp_dict["data"]["VALIDATION_SIZE_FOR_LOSS"]])
         print("train: {} pairs ~~ val: {} pairs".format(len(data_train), len(data_val)))
         if train_mode == "triplets":
-            val_loss_loader = SiamesePairsDataLoader(dataset=data_val, batch_size=config["eval_batch_size"],
-                                                     shuffle=False,
-                                                     num_workers=4,
-                                                     tokenizer_type=config["tokenizer_type"],
-                                                     max_length=config["max_length"], drop_last=drop_last)
+            val_loss_loader = SiamesePairsDataLoaderTripletsIds(
+                dataset=data_val,
+                batch_size=config["eval_batch_size"],
+                shuffle=False,
+                num_workers=4,
+                tokenizer_type=config["tokenizer_type"],
+                max_length=config["max_length"],
+                drop_last=drop_last,
+                map_id_to_query_text = map_id_to_query_text,
+                map_id_to_doc_text = map_id_to_doc_text
+            )
         elif train_mode == "triplets_with_distil":
             val_loss_loader = DistilSiamesePairsDataLoader(dataset=data_val, batch_size=config["eval_batch_size"],
                                                            shuffle=False,
@@ -142,10 +146,17 @@ def train(exp_dict: DictConfig):
             raise NotImplementedError
 
     if train_mode == "triplets":
-        train_loader = SiamesePairsDataLoader(dataset=data_train, batch_size=config["train_batch_size"], shuffle=True,
-                                              num_workers=4,
-                                              tokenizer_type=config["tokenizer_type"],
-                                              max_length=config["max_length"], drop_last=drop_last)
+        train_loader = SiamesePairsDataLoaderTripletsIds(
+            dataset=data_train,
+            batch_size=config["train_batch_size"],
+            shuffle=True,
+            num_workers=4,
+            tokenizer_type=config["tokenizer_type"],
+            max_length=config["max_length"],
+            drop_last=drop_last,
+            map_id_to_query_text = map_id_to_query_text,
+            map_id_to_doc_text = map_id_to_doc_text
+        )
     elif train_mode == "triplets_with_distil":
         train_loader = DistilSiamesePairsDataLoader(dataset=data_train, batch_size=config["train_batch_size"],
                                                     shuffle=True,
@@ -203,7 +214,7 @@ def get_map_id_to_text(data_dir, tsv):
             text = fields[1]
             map_id_to_text[id] = text
     return map_id_to_text
-
-
+    
+    
 if __name__ == "__main__":
     train()
