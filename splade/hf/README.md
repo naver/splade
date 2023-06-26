@@ -4,6 +4,7 @@
 It also differs in various aspects -- for instance, we remove the scheduler for the regularization hyperparameters, add the "anti-zero" trick to avoid representations collapsing to zero vectors etc. 
 
 This code is solely meant to **train** models. To index and retrieve with SPLADE, everything remains the same.
+tested with: pip install torch transformers==4.29.2  hydra-core faiss-cpu pytest numba h5py pytrec_eval tensorboard  accelerate  matplotlib
 
 ## Data format
 
