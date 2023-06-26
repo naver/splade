@@ -62,7 +62,7 @@ python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $
 
 ```
 
-where for instance `+hf.data.scores` indicates the path to a score file (all the HF hp are prefixed wih `hf`).
+where for instance `+hf.data.training_data_path` indicates the path to a training file  and  `+hf.data.training_data_type` the file tyype (all the HF hp are prefixed wih `hf`).
 
 After training, indexing and retrieval can be launched with :
 
@@ -76,5 +76,5 @@ python   -m src.retrieve  -config-path=$dir/chk   --config--name=config
 
 ## Example
 
-The config file `conf/config_f_distilbert.yaml` corresponds to  a training with toy data
+The config file `conf/config_hf_splade_l1q.yaml` corresponds to  a  HF training with toy data
 
