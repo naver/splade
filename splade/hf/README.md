@@ -32,7 +32,6 @@ model=distilbert-base-uncased
 config=config_hf_splade_distill_l1q.yaml
 python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $port -m splaed.hf_train  --config-name=$config \
                      config.lr=2.0e-5 \
-                     +data.flops_queries=/path/to/flops/queries \
                      config.nb_iterations=1000 \
                      config.checkpoint_dir=$dir/chk/  \
                      config.index_dir=$dir/index/  \
@@ -45,16 +44,22 @@ python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $
                      config.regularizer.L1.lambda_q=.001 \
                      config.train_batch_size=4 \
                      config.max_length=128 \
-                     config.warmup_steps=1 \
+                     +config.warmup_steps=1 \
+                     +config.matching_type=splade \
+                     config.hf_training=true \
+                     +data.flops_queries=/path/to/flops/queries \
                      +hf.training.logging_dir=$dir/chk/ \
                      +hf.training.num_train_epochs=5 \
                      +hf.training.warmup_ratio=0.01 \
                      +hf.training.weight_decay=0 \
                      hf.model.dense=false \
-                     +hf.data.distillation=true \
+                     hf.data.train_loss=kldiv \
                      hf.data.n_negatives=32 \
                      +hf.model.shared_weights=false \
-                     +hf.data.scores=/path/to/scores
+                     +hf.data.training_data_path=/path/to/scores \
+                     +hf.data.training_data_type=pkl_dict \
+
+
 ```
 
 where for instance `+hf.data.scores` indicates the path to a score file (all the HF hp are prefixed wih `hf`).
