@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Literal
 
 from transformers import TrainingArguments
 
@@ -65,7 +65,7 @@ class DataTrainingArguments:
     """
 
     training_data_type:Optional[str] = field(
-        metadata={"help": "data format ()"},
+        metadata={"help": "data format (json, pkl_dict, saved_pkl, trec, triplets)"},
         default=None 
     )
     training_data_path: Optional[str] = field(
@@ -84,11 +84,6 @@ class DataTrainingArguments:
     qrels_path: str = field(
         metadata={"help": "Path to qrels"},
         default=None
-    )
-
-    distillation: bool = field(
-        metadata={"help": "Use distillation data"},
-        default=False
     )
 
     n_negatives: int = field(
@@ -115,9 +110,10 @@ class LocalTrainingArguments(TrainingArguments):
         metadata={"help": "Output path dir"},
         default=None
     )
-    mse_margin: bool = field(
-        metadata={"help": "Use mse margin for distillation"},
-        default=False
+
+    training_loss: str = field(
+        metadata={"help": "Which losses to use: contrastive, kldiv, mse_margin, kldiv_mse_margin_with_weights, kldiv_mse_margin_without_weights, kldiv_contrastive_without_weights, kldiv_contrastive_with_weights"},
+        default="kldiv_contrastive_with_weights"
     )
 
     l0d: float = field(
@@ -140,5 +136,19 @@ class LocalTrainingArguments(TrainingArguments):
         default=0
     )
 
+    top_d: int = field(
+        metadata={"help": "TOP_k document pruning"},
+        default=-1
+    )
+
+    top_q: int = field(
+        metadata={"help": "TOP_k query pruning"},
+        default=-1
+    )
+
+    lexical_type: str = field(
+        metadata={"help": "Type of splade lexical to do: none, document, query or both"},
+        default="none",
+    )
 
 

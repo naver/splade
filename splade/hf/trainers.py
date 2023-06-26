@@ -4,6 +4,7 @@ from transformers import PreTrainedModel
 import torch
 import os
 import numpy as np
+from splade.utils.utils import generate_bow, clean_bow, pruning
 
 
 class BaseTrainer(Trainer):
@@ -20,12 +21,7 @@ class BaseTrainer(Trainer):
     def _L0(batch_rep):
         return torch.count_nonzero(batch_rep, dim=-1).float().mean()
 
-    @staticmethod
-    def splade_max(output, attention_mask):
-        # tokens: output of a huggingface tokenizer
-        relu = torch.nn.ReLU(inplace=False)
-        values, _ = torch.max(torch.log(1 + relu(output)) * attention_mask.unsqueeze(-1), dim=1)
-        return values
+
 
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         if model is None:
@@ -72,7 +68,7 @@ class BaseTrainer(Trainer):
 
 class IRTrainer(BaseTrainer):
 
-    def __init__(self, n_negatives, shared_weights=True, distillation=False, mse_margin=False, splade_doc=False, dense=False, *args, **kwargs):
+    def __init__(self, n_negatives, shared_weights=True, splade_doc=False, dense=False, *args, **kwargs):
         super(IRTrainer, self).__init__(*args, **kwargs)
         self.n_negatives = n_negatives
         self.ce_loss = torch.nn.CrossEntropyLoss()
@@ -83,6 +79,10 @@ class IRTrainer(BaseTrainer):
         self.lambda_q = self.args.l0q
         self.T_d = self.args.T_d
         self.T_q = self.args.T_q
+        self.top_d = self.args.top_d
+        self.top_q = self.args.top_q
+        self.lexical_type = self.args.lexical_type #(none, document, query, both)
+        assert self.lexical_type in ("none", "document","query","both")
         self.last_celoss = list()
         self.last_distilloss = list()
         self.last_flops = list()
@@ -90,11 +90,29 @@ class IRTrainer(BaseTrainer):
         self.last_docs = list()
         self.last_queries = list()
         self.shared_weights = shared_weights
-        self.mse_margin = mse_margin
         self.splade_doc = splade_doc
         self.step = 0
         self.dense = dense
-        self.distillation=distillation
+        self.loss = self.args.training_loss
+        self.last_losses = dict()
+        if "contrastive" in self.loss:
+            self.last_losses["contrastive"] = list()
+        if "mse_margin" in self.loss:
+            self.last_losses["mse_margin"] = list()
+        if "kldiv" in self.loss:
+            self.last_losses["kldiv"] = list()
+
+
+        if self.tokenizer:
+            self.pad_token = self.tokenizer.special_tokens_map["pad_token"]
+            self.cls_token = self.tokenizer.special_tokens_map["cls_token"]
+            self.sep_token = self.tokenizer.special_tokens_map["sep_token"]
+            self.mask_token = self.tokenizer.special_tokens_map["mask_token"]
+            self.pad_id = self.tokenizer.vocab[self.pad_token]
+            self.cls_id = self.tokenizer.vocab[self.cls_token]
+            self.sep_id = self.tokenizer.vocab[self.sep_token]
+            self.mask_id = self.tokenizer.vocab[self.mask_token]
+
 
 
     def log(self, logs: Dict[str, float]) -> None:
@@ -112,17 +130,20 @@ class IRTrainer(BaseTrainer):
             logs["L0_q"] = np.mean(self.last_queries)
             logs["flops_loss"] = np.mean(self.last_flops)
             logs["anti-zero"] = np.mean(self.last_anti_zero)
-        logs["ce_loss"] = np.mean(self.last_celoss)
-        if self.distillation:
-            logs["distil_loss"] = np.mean(self.last_distilloss)
+        if "contrastive" in self.loss:
+            logs["contrastive_loss"] = np.mean(self.last_losses["contrastive"])
+            self.last_losses["contrastive"] = list()
+        if "mse_margin" in self.loss:
+            logs["mse_margin_loss"] = np.mean(self.last_losses["mse_margin"])
+            self.last_losses["mse_margin"] = list()
+        if "kldiv" in self.loss:
+            logs["kldiv_loss"] = np.mean(self.last_losses["kldiv"])
+            self.last_losses["kldiv"] = list()
 
         self.last_docs = list()
         self.last_queries = list()
         self.last_flops = list()
         self.last_anti_zero = list()
-        self.last_celoss = list()
-        if self.distillation:
-            self.last_distilloss = list()
 
         output = {**logs, **{"step": self.state.global_step}}
         self.state.log_history.append(output)
@@ -143,45 +164,83 @@ class IRTrainer(BaseTrainer):
         del inputs["scores"]
 
         self.compute_lambdas()
-        full_output = model(**inputs)
-        queries, docs = full_output # shape (bsz, 1, Vocab), (bsz, nb_neg+1, Vocab)
+        queries, docs = model(**inputs) # shape (bsz, 1, Vocab), (bsz, nb_neg+1, Vocab)
+        if self.lexical_type != "none":
+            #input_ids = inputs["input_ids"].view(-1,self.n_negatives+2,inputs['input_ids'].size(1)) #(bsz, nb_neg+2, seq_length)
+            input_ids = inputs["input_ids"].reshape(-1,self.n_negatives+2,inputs['input_ids'].size(1)) #(bsz, nb_neg+2, seq_length)
+            doc_ids = input_ids[:,1:,:].reshape(-1,input_ids.size(-1)) # (bsz, seq_length)
+            query_ids = input_ids[:,:1,:].reshape(-1,input_ids.size(-1)) # (bsz*(nb_neg+1), seq_length)
+            doc_bow = generate_bow(doc_ids,docs.size(-1), device=doc_ids.device)
+            doc_bow = clean_bow(doc_bow, pad_id = self.pad_id, cls_id=self.cls_id, sep_id=self.sep_id, mask_id=self.mask_id)
+            query_bow = generate_bow(query_ids,queries.size(-1), device=query_ids.device)
+            query_bow = clean_bow(query_bow, pad_id = self.pad_id, cls_id=self.cls_id, sep_id=self.sep_id, mask_id=self.mask_id)
+            if self.lexical_type == "query" or self.lexical_type == "both":
+                queries = queries * query_bow.view(-1, 1, doc_bow.size(-1))
+            if self.lexical_type == "document" or self.lexical_type == "both":
+                docs = docs * doc_bow.view(-1, self.n_negatives+1, doc_bow.size(-1))
+
+        if self.top_d > 0:
+            docs = pruning(docs, self.top_d,2)
+
+        if self.top_q > 0:
+            queries = pruning(queries, self.top_q,2)
+
+
         scores = torch.bmm(queries,torch.permute(docs,[0,2,1])).squeeze(1) # shape (bsz, nb_neg+1)
         scores_positive = scores[:,:1] # shape (bsz, 1)
         negatives = docs[:,1:,:].reshape(-1,docs.size(2)).T # shape (Vocab, bsz*nb_neg)
         scores_negative = torch.matmul(queries.squeeze(1),negatives) # shape (bsz, bsz*nb_neg)
         all_scores = torch.cat([scores_positive,scores_negative],dim=1) # shape (bsz, bsz*nb_neg+1)
-        labels_index = torch.zeros(scores.size(0)).to(scores.device).long() # shape (bsz)
-        ce_loss = self.ce_loss(all_scores, labels_index).mean()
-        
-        # training without distillation; loss= cross-entropy loss
-        if self.distillation is False:
-            loss=ce_loss
-        # distillation with MSE margin loss
-        elif self.mse_margin:
-            scores_negative_student = scores[:,1:] # shape (bsz, nb_neg)
-            scores_positive_student = scores[:,:1] # shape (bsz, 1)
-            margin_student = scores_positive_student - scores_negative_student
+
+        losses = list()
+
+        if "contrastive" in self.loss:
+            labels_index = torch.zeros(scores.size(0)).to(scores.device).long() # shape (bsz)
+            ce_loss = self.ce_loss(all_scores, labels_index).mean()
+            if "with_weights" in self.loss:
+                weight = 0.01
+            else:
+                weight = 1.0
+            losses.append(weight*ce_loss)
+            self.last_losses["contrastive"].append(ce_loss.cpu().detach().item())
+
+        if "mse_margin" in self.loss:
+            scores_a = scores.unsqueeze(1) # shape (bsz, 1 ,nb_neg)
+            scores_b = scores.unsqueeze(2) # shape (bsz, nb_neg, 1)
+            margin_student = scores_a - scores_b # shape (bsz, nb_neg, 1)
 
             teacher_scores = teacher_scores.view(scores.size()).to(scores.device)
-            scores_negative_teacher = teacher_scores[:,1:]
-            scores_positive_teacher = teacher_scores[:,:1]
-            margin_teacher = scores_positive_teacher - scores_negative_teacher
+            teacher_scores_a = teacher_scores.unsqueeze(1) # shape (bsz, 1 ,nb_neg)
+            teacher_scores_b = teacher_scores.unsqueeze(2) # shape (bsz, nb_neg, 1)
+            margin_teacher = teacher_scores_a - teacher_scores_b # shape (bsz, nb_neg, 1)
 
-            ranking_loss = self.mse_loss(margin_student,margin_teacher).mean(dim=1).mean(dim=0)
-            loss = 0.01*ce_loss + 0.99*ranking_loss
+            mse_loss = self.mse_loss(margin_student,margin_teacher).mean(dim=2).mean(dim=1).mean(dim=0)
+
+            if "with_weights" in self.loss:
+                weight = 0.05
+            else:
+                weight = 1.0
+            losses.append(weight*mse_loss)
+            self.last_losses["mse_margin"].append(mse_loss.cpu().detach().item())
+
         # distillation with kld loss
-        else: 
+        if "kldiv" in self.loss:
             temperature = 1
             student_scores = torch.log_softmax(scores*temperature,dim=1)
             teacher_scores = teacher_scores.view(scores.size()).to(scores.device)
             teacher_scores = torch.softmax(teacher_scores*temperature,dim=1)
 
-            ranking_loss = self.distil_loss(student_scores, teacher_scores).sum(dim=1).mean(dim=0)
-            loss = 0.01*ce_loss + 0.99*ranking_loss
+            kldiv_loss = self.distil_loss(student_scores, teacher_scores).sum(dim=1).mean(dim=0)
+            if "with_weights" in self.loss:
+                weight = 0.99
+            else:
+                weight = 1.0
+            losses.append(weight*kldiv_loss)
+            self.last_losses["kldiv"].append(kldiv_loss.cpu().detach().item())
 
-        self.last_celoss.append(ce_loss.cpu().detach().item())
-        if self.distillation:
-            self.last_distilloss.append(ranking_loss.cpu().detach().item())
+        loss = 0
+        for loss_ in losses:
+            loss = loss + loss_
 
         if not self.dense:
             flops = self.lambda_t_d*self._flops(docs.reshape(-1,docs.size(2)))
@@ -198,4 +257,4 @@ class IRTrainer(BaseTrainer):
         if not return_outputs:
             return loss
         else:
-            return loss, [full_output]
+            return loss, [(queries, docs)]

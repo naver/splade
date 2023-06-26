@@ -3,7 +3,8 @@ import os
 import json
 
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
+
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
 
@@ -19,7 +20,7 @@ from splade.hf.convertl2i2hf import convert
 from splade.utils.utils import get_initialize_config
 
 
-@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
+@hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME,version_base="1.2")
 def hf_train(exp_dict: DictConfig):
 
     # mapping yaml/hydra conf into HF data structure
@@ -42,7 +43,7 @@ def hf_train(exp_dict: DictConfig):
 
     # load the dataset
     data_collator= L2I_Collator(tokenizer=tokenizer,max_length=model_args.max_length)
-    if data_args.training_data_type == 'triplet':
+    if data_args.training_data_type == 'triplets':
          dataset = TRIPLET_Dataset(data_dir=data_args.training_data_path)
     else:
         dataset = L2I_Dataset(training_data_type=data_args.training_data_type, # training file type
@@ -61,8 +62,6 @@ def hf_train(exp_dict: DictConfig):
                         data_collator=data_collator.torch_call,
                         tokenizer=tokenizer,
                         shared_weights=model_args.shared_weights,  # query and document model shared or not
-                        distillation=data_args.distillation,       # use distillation or not
-                        mse_margin=training_args.mse_margin,       # use mse or KL as loss
                         splade_doc=model_args.splade_doc,          # model is a spladedoc model
                         n_negatives=data_args.n_negatives,         # nb negatives in batch 
                         dense=model_args.dense)                    # is the model dense or not (DPR or SPLADE)
@@ -70,6 +69,10 @@ def hf_train(exp_dict: DictConfig):
     last_checkpoint = None
     if training_args.resume_from_checkpoint: #os.path.isdir(training_args.output_dir) and  not training_args.overwrite_output_dir:
         last_checkpoint  =  get_last_checkpoint(training_args.output_dir)
+
+    if  trainer.is_world_process_zero():
+        print(OmegaConf.to_yaml(exp_dict))
+
 
     trainer.train(resume_from_checkpoint=last_checkpoint)
     final_path = os.path.join(training_args.output_dir,"model")
