@@ -21,5 +21,5 @@ We now index all the pruned and unpruned indexes with `bash run_all.sh MODELNAME
 
 ## Step 3: Retrieving with Anserini
 
-We now retrieve all indexes with `bash run_all.sh MODELNAME 2` where modelname is {eff_v_large, eff_v_medium, eff_v_small, msmarco-deepimpact or msmarco-unicoil-tilde}. Note that if indexes where not pruned before it will only index the base model
+We now retrieve all indexes with `bash run_all.sh MODELNAME 3` where modelname is {eff_v_large, eff_v_medium, eff_v_small, msmarco-deepimpact or msmarco-unicoil-tilde}. Note that if indexes where not pruned before it will only query the base model
 
