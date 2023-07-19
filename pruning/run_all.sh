@@ -22,5 +22,5 @@ elif [[ "$step" == 3 ]]; then
 
 # After indexing with pyserini you can then retrieve
 
-    bash query_all.sh $basename
+    bash query_all_indexes.sh $basename
 fi
