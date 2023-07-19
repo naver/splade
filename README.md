@@ -5,6 +5,7 @@
 [![weights](https://img.shields.io/badge/weights-splade-blue)](https://europe.naverlabs.com/research/machine-learning-and-optimization/splade-models/)
 
 ## What's New:
+* July 2023: We add the code for static pruning SPLADE indexes in order to reproduce [A Static Pruning Study on Sparse Neural Retrievers](https://arxiv.org/abs/2304.12702)
 * May 2023:  We add a new branch (based on HF Trainer) allowing training with several negatives : https://github.com/naver/splade/tree/hf
 * April 2023: We have removed the weights and pushed them to huggingface (https://huggingface.co/naver/splade_v2_max and https://huggingface.co/naver/splade_v2_distil) 
 
