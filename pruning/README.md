@@ -7,7 +7,7 @@ This code shows how to reproduce the pruning experiments from the paper: [A Stat
 First thing you need to do is download the data and extract it
 
 ```
-wget https://www.dropbox.com/s/odkkbgg8lopcduk/pruning.tar.gz?dl=0 -O pruning_data.tar.gz
+wget https://www.dropbox.com/s/kjk9scpku3mrqnn/data.tar.gz?dl=0 -O pruning_data.tar.gz
 tar xzvf pruning_data.tar.gz
 ```
 
