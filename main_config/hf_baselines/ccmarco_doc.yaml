@@ -1,0 +1,24 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: hf_baseline
+  - train/data: distil_top50_50_random
+  - train/model: splade_ccmarco_doc
+############## INDEX ###################################
+  - index: fixed_msmarco
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+################ HF TRAINING ###########################
+  - hf: training
+############### FLOPS ##################################
+  - flops: msmarco  
+
+config:  # to be provided for each run
+  checkpoint_dir:  experiments/hf/baseline_ccmarco_doc/checkpoint
+  index_dir: experiments/hf/baseline_ccmarco_doc/index
+  out_dir: experiments/hf/baseline_ccmarco_doc/out
+  fp16: true
+  hf_training: true
+
+hf:
+  model:
+    splade_doc: true

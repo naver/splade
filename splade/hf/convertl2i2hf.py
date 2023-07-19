@@ -103,7 +103,8 @@ def convert(exp_dict):
     if 'lr' in config: t.learning_rate = config.lr
     if 'train_batch_size' in config:t.per_device_train_batch_size =config.train_batch_size
     if "seed" in config: t.seed=config.seed
-   
+    if t.logging_dir is None: 
+        t.logging_dir = os.path.join(config.checkpoint_dir, "log")
 
     if not m.dense:
         if 'regularizer' in config:
@@ -119,7 +120,7 @@ def convert(exp_dict):
             except: # omegaconf.errors.ConfigKeyError
                 try:
                     t.l0q = config.regularizer.FLOPS.lambda_q
-                    t.l0q = config.regularizer.FLOPS.T
+                    t.T_q = config.regularizer.FLOPS.T
                 except:
                     t.l0q = t.l0d
                     t.T_q = t.T_d

@@ -1,0 +1,20 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: hf_baseline
+  - train/data: distil_from_ensemble
+  - train/model: splade
+############## INDEX ###################################
+  - index: msmarco
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+################ HF TRAINING ###########################
+  - hf: training
+############### FLOPS ##################################
+  - flops: msmarco 
+
+config:  # to be provided for each run
+  checkpoint_dir:  experiments/hf/baseline_distilbert_nils/checkpoint
+  index_dir: experiments/hf/baseline_distilbert_nils/index
+  out_dir: experiments/hf/baseline_distilbert_nils/out
+  fp16: true
+  hf_training: true

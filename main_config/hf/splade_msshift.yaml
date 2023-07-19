@@ -1,0 +1,19 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: splade_l1q
+  - train/data: msmarco
+  - train/model: splade
+############## INDEX ###################################
+  - index: fixed_msmarco
+
+############## RETRIEVE ################################
+  - retrieve_evaluate: all_msshift
+################ HF TRAINING ###########################
+  - hf: training
+
+config:  # to be provided for each run
+  checkpoint_dir:  ../exp/splade_max/checkpoint
+  index_dir: ../exp/splade_max/index
+  out_dir: ../exp/splade_max/out
+  fp16: false
+  hf_training: true

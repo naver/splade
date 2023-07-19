@@ -1,0 +1,22 @@
+# @package config
+
+seed: 123
+pretrained_no_yamlconfig: false
+
+index_retrieve_batch_size: 500
+max_length: 128
+train_batch_size: 20
+
+fp16: true
+
+regularizer:
+  FLOPS:
+    lambda_d: 0.02
+    T: 30000
+    targeted_rep: rep
+    reg: FLOPS
+  L1:
+    lambda_q: 0.01
+    T: 30000
+    targeted_rep: rep
+    reg: L1

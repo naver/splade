@@ -64,6 +64,12 @@ def remove_old_ckpt(dir_, k):
         print("REMOVE", os.path.join(dir_, "model_ckpt_{}.tar".format(oldest)))
         os.remove(os.path.join(dir_, "model_ckpt_{}.tar".format(oldest)))
 
+def pruning(output, k,dim):
+    topk, indices = torch.topk(output, int(k)) # last dim
+    prune_docs = torch.zeros(output.size()).to(output.device)
+    output = prune_docs.scatter(dim, indices, topk)
+    return output
+
 
 def pruning(output, k,dim):
     topk, indices = torch.topk(output, int(k)) # last dim
@@ -82,6 +88,22 @@ def generate_bow(input_ids, output_dim, device, values=None):
     else:
         bow[torch.arange(bs).unsqueeze(-1), input_ids] = values
     return bow
+
+def clean_bow(bow,pad_id=None, cls_id=None, sep_id=None, mask_id=None):
+    """clean a bag of words representation
+    """
+    if pad_id:
+        bow[:, pad_id] = 0  # otherwise the pad tok is in bow
+    if cls_id:
+        bow[:, cls_id] = 0  # otherwise the pad tok is in bow
+    if sep_id:
+        bow[:, sep_id] = 0  # otherwise the pad tok is in bow
+    if mask_id:
+        bow[:, mask_id] = 0  # otherwise the pad tok is in bow
+
+    return bow
+
+
 
 
 def clean_bow(bow,pad_id=None, cls_id=None, sep_id=None, mask_id=None):

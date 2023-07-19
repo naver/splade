@@ -1,0 +1,24 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: hf_baseline
+  - train/data: distil_top50_50_random
+  - train/model: ppsd_lexical
+############## INDEX ###################################
+  - index: fixed_msmarco
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+################ HF TRAINING ###########################
+  - hf: training
+############### FLOPS ##################################
+  - flops: msmarco 
+
+config:  # to be provided for each run
+  checkpoint_dir:  experiments/hf/ppsd_lexical/checkpoint
+  index_dir: experiments/hf/ppsd_lexical/index
+  out_dir: experiments/hf/ppsd_lexical/out
+  fp16: true
+  hf_training: true
+
+hf:
+  training:
+    lexical_type: "query"

@@ -86,11 +86,6 @@ class DataTrainingArguments:
         default=None
     )
 
-    distillation: bool = field(
-        metadata={"help": "Use distillation data"},
-        default=False
-    )
-
     n_negatives: int = field(
         metadata={"help": "Negatives per query"},
         default=4,
@@ -115,9 +110,10 @@ class LocalTrainingArguments(TrainingArguments):
         metadata={"help": "Output path dir"},
         default=None
     )
-    mse_margin: bool = field(
-        metadata={"help": "Use mse margin for distillation"},
-        default=False
+
+    training_loss: str = field(
+        metadata={"help": "Which losses to use: contrastive, kldiv, mse_margin, kldiv_mse_margin_with_weights, kldiv_mse_margin_without_weights, kldiv_contrastive_without_weights, kldiv_contrastive_with_weights"},
+        default="kldiv_contrastive_with_weights"
     )
 
     l0d: float = field(

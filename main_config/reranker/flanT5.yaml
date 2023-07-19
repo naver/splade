@@ -1,0 +1,21 @@
+defaults:  # (these specify which config FILES to use)
+  - rerank_collection: msmarco_trec19
+  - rerank_runs: new_baseline_trec19
+
+config:  # to be provided for each run
+  out_dir: experiments/rerankers/flanT5/out/
+  pretrained_no_yamlconfig: True
+  tokenizer_type: google/flan-t5-xl
+  max_length: 512
+  eval_batch_size: 200
+  reranker_type: PairwisePrompt
+  prompt: 'Given a query "{}", which of the following two passages is more relevant to the query?\nPassage A: "{}"\nPassage B: "{}"\nOutput Passage A or Passage B: Passage '
+  top_k: 20
+
+init_dict:
+  model_type_or_dir: google/flan-t5-xl
+  fp16: false
+  bf16: true
+
+ir_datasets:
+  dataset_path: /gfs-ssd/project/neuralsearch/bkup/classanc/ir_datasets/

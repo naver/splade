@@ -9,3 +9,5 @@ init_dict:
 
 config:
   tokenizer_type: distilbert-base-uncased
+  matching_type: splade
+

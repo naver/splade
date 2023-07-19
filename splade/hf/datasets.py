@@ -94,7 +94,7 @@ class L2I_Dataset(Dataset):
                 self.samples = pickle.load(fIn)
                 # cast int into str for qids/dids
                 # and filter out ig not enough negatives 
-                self.samples = {str(k):{str(k2):v2 for k2,v2 in v.items()} for k,v in self.samples.items() if ( str(k) in self.qrels and len(v.keys()) >  len(self.qrels[str(k)]) )}
+                self.samples = {str(k):{str(k2):float(v2) for k2,v2 in v.items()} for k,v in self.samples.items() if ( str(k) in self.qrels and len(v.keys()) >  len(self.qrels[str(k)]) )}
 
                   
         elif training_data_type == 'trec':
@@ -106,7 +106,7 @@ class L2I_Dataset(Dataset):
                     if self.qrels is None  or str(qid) in self.qrels:
                         if str(qid) not in self.samples:
                             self.samples[str(qid)] = dict()
-                        self.samples[str(qid)][str(did)]=score
+                        self.samples[str(qid)][str(did)]=float(score)
 
         elif training_data_type == 'json':
             # l2i output
@@ -119,7 +119,7 @@ class L2I_Dataset(Dataset):
                     if str(qid) not in self.samples:
                         self.samples[str(qid)] = dict()
                     for did, score in sorted(documents.items(), reverse=True, key=lambda item: item[1]):
-                        self.samples[str(qid)][str(did)]=int(score)
+                        self.samples[str(qid)][str(did)]=float(score)
         else:
             raise NotImplementedError('training_data_type must be in [saved_pkl, pkl_dict, trec, json]')
 

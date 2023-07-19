@@ -4,6 +4,7 @@
 It also differs in various aspects -- for instance, we remove the scheduler for the regularization hyperparameters, add the "anti-zero" trick to avoid representations collapsing to zero vectors etc. 
 
 This code is solely meant to **train** models. To index and retrieve with SPLADE, everything remains the same.
+tested with: pip install torch transformers==4.29.2  hydra-core faiss-cpu pytest numba h5py pytrec_eval tensorboard  accelerate  matplotlib
 
 ## Data format
 
@@ -32,7 +33,6 @@ model=distilbert-base-uncased
 config=config_hf_splade_distill_l1q.yaml
 python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $port -m splaed.hf_train  --config-name=$config \
                      config.lr=2.0e-5 \
-                     +data.flops_queries=/path/to/flops/queries \
                      config.nb_iterations=1000 \
                      config.checkpoint_dir=$dir/chk/  \
                      config.index_dir=$dir/index/  \
@@ -45,19 +45,25 @@ python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $
                      config.regularizer.L1.lambda_q=.001 \
                      config.train_batch_size=4 \
                      config.max_length=128 \
-                     config.warmup_steps=1 \
+                     +config.warmup_steps=1 \
+                     +config.matching_type=splade \
+                     config.hf_training=true \
+                     +data.flops_queries=/path/to/flops/queries \
                      +hf.training.logging_dir=$dir/chk/ \
                      +hf.training.num_train_epochs=5 \
                      +hf.training.warmup_ratio=0.01 \
                      +hf.training.weight_decay=0 \
                      hf.model.dense=false \
-                     +hf.data.distillation=true \
+                     hf.data.train_loss=kldiv \
                      hf.data.n_negatives=32 \
                      +hf.model.shared_weights=false \
-                     +hf.data.scores=/path/to/scores
+                     +hf.data.training_data_path=/path/to/scores \
+                     +hf.data.training_data_type=pkl_dict \
+
+
 ```
 
-where for instance `+hf.data.scores` indicates the path to a score file (all the HF hp are prefixed wih `hf`).
+where for instance `+hf.data.training_data_path` indicates the path to a training file  and  `+hf.data.training_data_type` the file tyype (all the HF hp are prefixed wih `hf`).
 
 After training, indexing and retrieval can be launched with :
 
@@ -71,5 +77,5 @@ python   -m src.retrieve  -config-path=$dir/chk   --config--name=config
 
 ## Example
 
-The config file `conf/config_f_distilbert.yaml` corresponds to  a training with toy data
+The config file `conf/config_hf_splade_l1q.yaml` corresponds to  a  HF training with toy data
 

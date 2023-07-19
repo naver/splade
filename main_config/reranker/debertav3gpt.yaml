@@ -1,0 +1,29 @@
+defaults:  # (these specify which config FILES to use)
+  - rerank_collection: msmarco_trec19
+  - rerank_runs: new_baseline_trec19
+
+config:  # to be provided for each run
+  out_dir: experiments/rerankers/debertav3gpt/out/
+  pretrained_no_yamlconfig: True
+  tokenizer_type: /scratch/1/user/hdejean/RankGPT/deberta-10k-rank_net
+  index_retrieve_batch_size: 200
+  batch_size: 200
+  max_length: 512
+  eval_batch_size: 200
+  reranker_type: debertav3
+  top_k: 100
+  return_token_type_ids: True
+  add_prefix: False
+
+init_dict:
+  model_type_or_dir: /scratch/1/user/hdejean/RankGPT/deberta-10k-rank_net
+  fp16: true
+  bf16: false
+
+#data:
+#  path_run: [/scratch/2/user/classanc/TREC/anserini_indexes/runs/farsi/td.trec]
+#  run_name: [splade_2022]
+#  eval_metric: [ mrr_10, recall, ndcg_cut ]
+
+ir_datasets:
+  dataset_path: /gfs-ssd/project/neuralsearch/bkup/classanc/ir_datasets/

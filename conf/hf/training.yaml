@@ -10,6 +10,9 @@ training:
   save_steps: 1000
   dataloader_drop_last: True
   report_to: [ tensorboard ]
+  training_loss: contrastive
+  learning_rate: 2e-5
+  warmup_ratio: 0.01
 model:
   dense: false
 data:

@@ -1,0 +1,17 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: siamese
+  - train/data: tripclick_hofstaetter
+  - train/model: siamese
+############## INDEX ###################################
+  - index: tripclick
+
+############## RETRIEVE ################################
+  - retrieve_evaluate:  tripclick_head_raw_val
+
+config:  # to be provided for each run
+  checkpoint_dir:  /gfs-ssd/user/sclincha/models/tripclick/dense_v1/checkpoint
+  index_dir: /gfs-ssd/user/sclincha/models/tripclick/dense_v1/index
+  out_dir: /gfs-ssd/user/sclincha/models/tripclick/dense_v1/out
+  fp16: true
+  #nb_iterations: 50000

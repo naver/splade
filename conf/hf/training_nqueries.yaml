@@ -1,0 +1,19 @@
+# @package hf
+
+training:
+  resume_from_checkpoint: true
+  ddp_find_unused_parameters: false
+  fp16: true
+  logging_steps: 1000
+  report_to: [ tensorboard ]
+  dataloader_drop_last: true
+  mse_margin: false
+  num_train_epochs: 5
+  save_strategy: epoch
+
+model:
+  dense: false
+data:
+  n_negatives: 8
+  distillation: true
+  n_queries: 50000
