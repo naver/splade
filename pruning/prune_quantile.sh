@@ -1,0 +1,1 @@
+python prune_quantile.py --name $1 --quantile $2

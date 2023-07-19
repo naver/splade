@@ -1,0 +1,1 @@
+python prune_doc_index.py --name $1 --value_to_prune $2 --size_to_prune $3
