@@ -20,6 +20,6 @@ Configurations are under the conf folder.
 To run a config:
 ```
 export PYTHONPATH=$PYTHONPATH:$(pwd)
-python -m splade.hf_train --config-name <config> config.checkpoint_dir=<PATH>  config.index_dir=<PATHINDEX>  config.out_dir=<PATHRES>
+python -m splade.hf_train --config-name <config> config.checkpoint_dir=<PATH>  config.index_dir=<PATHINDEX>  config.out_dir=<PATHRES>  init_dict.model_type_or_dir=<YOUR MIDDLETRAINED MODEL>
 
 ```
