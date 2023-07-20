@@ -30,41 +30,10 @@ To specify (HF) arguments in the command line (for instance the number of negati
 In particular, training can be launched with :
 
 ```
-model=distilbert-base-uncased
-config=config_hf_splade_distill_l1q.yaml
-python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $port -m splade.hf_train  --config-name=$config \
-                     config.lr=2.0e-5 \
-                     config.nb_iterations=1000 \
-                     config.checkpoint_dir=$dir/chk/  \
-                     config.index_dir=$dir/index/  \
-                     config.out_dir=$dir/out/  \
-                     init_dict.model_type_or_dir=$model \
-                     config.tokenizer_type=$model \
-                     config.record_frequency=100000\
-                     config.train_monitoring_freq=100000 \
-                     config.regularizer.FLOPS.lambda_d=0.0005 \
-                     config.regularizer.L1.lambda_q=.001 \
-                     config.train_batch_size=4 \
-                     config.max_length=128 \
-                     +config.warmup_steps=1 \
-                     +config.matching_type=splade \
-                     config.hf_training=true \
-                     +data.flops_queries=/path/to/flops/queries \
-                     +hf.training.logging_dir=$dir/chk/ \
-                     +hf.training.num_train_epochs=5 \
-                     +hf.training.warmup_ratio=0.01 \
-                     +hf.training.weight_decay=0 \
-                     hf.model.dense=false \
-                     hf.data.train_loss=kldiv \
-                     hf.data.n_negatives=32 \
-                     +hf.model.shared_weights=false \
-                     +hf.data.training_data_path=/path/to/scores \
-                     +hf.data.training_data_type=pkl_dict \
-
+torchrun --nproc_per_node 2 -m splade.hf_train --config-name=distilbert_nils  --config-dir=main_config/hf_baselines config.checkpoint_dir
 
 ```
 
-where for instance `+hf.data.training_data_path` indicates the path to a training file  and  `+hf.data.training_data_type` the file tyype (all the HF hp are prefixed wih `hf`).
 
 After training, indexing and retrieval can be launched with :
 
