@@ -31,7 +31,7 @@ In particular, training can be launched with :
 ```
 model=distilbert-base-uncased
 config=config_hf_splade_distill_l1q.yaml
-python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $port -m splaed.hf_train  --config-name=$config \
+python -m torch.distributed.launch --use_env --nproc_per_node 4  --master_port $port -m splade.hf_train  --config-name=$config \
                      config.lr=2.0e-5 \
                      config.nb_iterations=1000 \
                      config.checkpoint_dir=$dir/chk/  \
