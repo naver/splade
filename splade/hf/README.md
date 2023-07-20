@@ -30,7 +30,7 @@ To specify (HF) arguments in the command line (for instance the number of negati
 In particular, training can be launched with :
 
 ```
-torchrun --nproc_per_node 2 -m splade.hf_train --config-name=distilbert_nils  --config-dir=main_config/hf_baselines config.checkpoint_dir
+torchrun --nproc_per_node 2 -m splade.hf_train --config-name=distilbert_nils  --config-dir=main_config/hf_baselines 
 
 ```
 
@@ -39,9 +39,9 @@ After training, indexing and retrieval can be launched with :
 
 ```
 
-python   -m src.index  --config-path=$dir/chk   --config--name=config
+python   -m src.index  --config-name=distilbert_nils  --config-dir=main_config/hf_baselines
 
-python   -m src.retrieve  -config-path=$dir/chk   --config--name=config
+python   -m src.retrieve --config-name=distilbert_nils  --config-dir=main_config/hf_baselines
 
 ```
 
