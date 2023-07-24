@@ -39,7 +39,7 @@ And the one with titles
 python -m splade.index --config-name=splade_titles --config-dir=main_config/two_msmarco
 ```
 
-## Step 3: Retrieving and evaluating Anserini
+## Step 3: Retrieving and evaluating with Numba
 
 For indexing the splade trained without titles:
 
