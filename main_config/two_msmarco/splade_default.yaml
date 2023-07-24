@@ -1,0 +1,31 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: hf_baseline
+  - train/data: distil_from_ensemble
+  - train/model: splade
+############## INDEX ###################################
+  - index: msmarco
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+################ HF TRAINING ###########################
+  - hf: training
+############### FLOPS ##################################
+  - flops: msmarco 
+
+config:  # to be provided for each run
+  checkpoint_dir:  experiments/two_msmarco/splade_default/checkpoint
+  index_dir: experiments/two_msmarco/splade_default/index
+  out_dir: experiments/two_msmarco/splade_default/out
+  fp16: true
+  hf_training: true
+  train_batch_size: 8
+
+hf:
+  training:
+    num_train_epochs: 3
+    save_strategy: epoch
+    weight_decay: 0
+    warmup_ratio: 0.1
+
+  data:
+    n_negatives: 32
