@@ -1,7 +1,7 @@
 from abc import ABC
 
 import torch
-from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel
+from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModel, T5EncoderModel
 
 from ..tasks.amp import NullContextManager
 from ..utils.utils import generate_bow, normalize
@@ -21,8 +21,17 @@ class TransformerRep(torch.nn.Module):
         directory containing model weights, vocab etc.
         """
         super().__init__()
-        assert output in ("mean", "cls", "hidden_states", "MLM"), "provide valid output"
-        model_class = AutoModel if output != "MLM" else AutoModelForMaskedLM
+        assert output in ("mean", "cls", "hidden_states", "MLM", "t5"), "provide valid output"
+        #model_class = AutoModel if output != "MLM" else AutoModelForMaskedLM
+
+        if output == "t5":
+            print("%%%%%%%%%%%%%%% USING T5 ENCODER %%%%%%%%%%%%%%%%% ")
+            model_class = T5EncoderModel
+        elif output != "MLM":
+            model_class = AutoModel
+        else:
+            model_class = AutoModelForMaskedLM
+
         self.transformer = model_class.from_pretrained(model_type_or_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(model_type_or_dir)
         self.output = output
@@ -143,7 +152,8 @@ class Splade(SiameseBase):
         self.agg = agg
 
     def encode(self, tokens, is_q):
-        out = self.encode_(tokens, is_q)["logits"]  # shape (bs, pad_len, voc_size)
+        encoded = self.encode_(tokens, is_q)
+        out = encoded["logits"]  # shape (bs, pad_len, voc_size)
         if self.agg == "sum":
             return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
         else:
@@ -151,6 +161,28 @@ class Splade(SiameseBase):
             return values
             # 0 masking also works with max because all activations are positive
 
+class SpladeT5(SiameseBase):
+    def __init__(self, model_type_or_dir, model_type_or_dir_q=None, freeze_d_model=False, agg="max", fp16=True):
+        super().__init__(model_type_or_dir=model_type_or_dir,
+                         output="t5",
+                         match="dot_product",
+                         model_type_or_dir_q=model_type_or_dir_q,
+                         freeze_d_model=freeze_d_model,
+                         fp16=fp16)
+        self.output_dim = self.transformer_rep.transformer.config.vocab_size  # output dim = vocab size = 30522 for BERT
+        assert agg in ("sum", "max")
+        self.agg = agg
+
+    def encode(self, tokens, is_q):
+        encoded = self.encode_(tokens, is_q)
+        #out = encoded["logits"]  # shape (bs, pad_len, voc_size)
+        out = encoded[0] # hiddden states
+        if self.agg == "sum":
+            return torch.sum(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+        else:
+            values, _ = torch.max(torch.log(1 + torch.relu(out)) * tokens["attention_mask"].unsqueeze(-1), dim=1)
+            return values
+            # 0 masking also works with max because all activations are positive
 
 class SpladeDoc(SiameseBase):
     """SPLADE without query encoder

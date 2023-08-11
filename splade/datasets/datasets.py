@@ -7,7 +7,6 @@ import random
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
-
 class PairsDatasetPreLoad(Dataset):
     """
     dataset to iterate over a collection of pairs, format per line: q \t d_pos \t d_neg
