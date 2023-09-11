@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-from splade.datasets.msmarco import IR_Dataset, IR_Dataset_NoLoad, CollectionDatasetPreLoad
+from splade.datasets.datasets import IR_Dataset, IR_Dataset_NoLoad, CollectionDatasetPreLoad
 import json
 from tqdm.auto import tqdm
 from collections import defaultdict
