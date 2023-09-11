@@ -23,29 +23,44 @@ Note that training w/o distillation still relies on a "score" file (but the scor
 
 ## Getting started
 
-To keep full backward compatibility with the original SPLADE code, we allow training models with [Hydra](https://hydra.cc/) configurations. The mapping between hyperparameters is done in `src/hf/convertl2i2hf.py`.
+To keep full backward compatibility with the original SPLADE code, we allow training models with [Hydra](https://hydra.cc/) configurations. The mapping between hyperparameters is done in `splade/hf/convertl2i2hf.py`.
 
-To specify (HF) arguments in the command line (for instance the number of negatives), please refer to `src/SLURM/hf.sh`.
 
+### Toy example: training a SPLADE model
 In particular, training can be launched with :
 
 ```
-torchrun --nproc_per_node 2 -m splade.hf_train --config-name=distilbert_nils  --config-dir=main_config/hf_baselines 
+torchrun --nproc_per_node 2 -m splade.hf_train --config-name=config_hf_splade_l1q.yaml  config.checkpoint_dir=<foopath_chk>
 
 ```
 
-
+### Toy example: Indexing a colelction with SPLADE model
 After training, indexing and retrieval can be launched with :
 
 ```
 
-python   -m src.index  --config-name=distilbert_nils  --config-dir=main_config/hf_baselines
+python  -m splade.index --config-dir=<foopath_chk> --config-name=config config.index_dir=<foopath_index>
 
-python   -m src.retrieve --config-name=distilbert_nils  --config-dir=main_config/hf_baselines
+python   -m splade.retrieve - --config-dir=/scratch/2/user/hdejean/expfoo/be3/ --config-name=config config.index_dir=<foopath_index> config.out_dir=<foopath_out>
 
 ```
 
-## Example
+### Toy example: training a reranker
+You can now train your reranker using the SPLADE output:
+```
 
-The config file `conf/config_hf_splade_l1q.yaml` corresponds to  a  HF training with toy data
+python -m splade.hf_train_reranker --config-name=config_reranker_train_toy
+
+```
+### Toy example: Reranker a SPLADE output
+
+Then  you can apply your reranker:
+```
+
+python -m splade.rerank --config-name=config_reranker_train_toy data.path_run=[<foopath_out>/run.json]
+
+```
+
+
+
 
