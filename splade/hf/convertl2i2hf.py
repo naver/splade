@@ -38,9 +38,10 @@ def convert(exp_dict):
     #m.shared_weights = 
     #m.splade_doc = 
     m.model_q = init_dict.model_type_or_dir_q
-    if config.matching_type == "siamese":
-        m.dense_pooling = init_dict.output
-        m.dense = config.matching_type == "siamese"
+    if "matching_type" in config:
+        if config.matching_type == "siamese":
+            m.dense_pooling = init_dict.output
+            m.dense = config.matching_type == "siamese"
 
     # ad tokenizer to model_args ?
     m.tokenizer_name_or_path = config.tokenizer_type
@@ -99,7 +100,7 @@ def convert(exp_dict):
     
     #will overwrite default/hf.yaml values    
     t.output_dir =  config.checkpoint_dir  
-    t.fp16=config.fp16
+    t.fp16=config.get("fp16",True)
     if 'lr' in config: t.learning_rate = config.lr
     if 'train_batch_size' in config:t.per_device_train_batch_size =config.train_batch_size
     if "seed" in config: t.seed=config.seed

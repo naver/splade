@@ -258,3 +258,118 @@ class IRTrainer(BaseTrainer):
             return loss
         else:
             return loss, [(queries, docs)]
+
+
+
+
+class RerankerTrainer(Trainer):
+
+    def __init__(self, n_negatives, *args, **kwargs):
+        super(RerankerTrainer, self).__init__(*args, **kwargs)
+        self.n_negatives = n_negatives
+        self.ce_loss = torch.nn.CrossEntropyLoss()
+        self.args.remove_unused_columns = False
+        self.loss = self.args.training_loss
+        self.ce_loss = torch.nn.CrossEntropyLoss()
+        self.distil_loss = torch.nn.KLDivLoss(reduction="none")
+        self.mse_loss = torch.nn.MSELoss(reduction="none")
+        self.last_losses = dict()
+        if "contrastive" in self.loss:
+            self.last_losses["contrastive"] = list()
+        if "mse_margin" in self.loss:
+            self.last_losses["mse_margin"] = list()
+        if "kldiv" in self.loss:
+            self.last_losses["kldiv"] = list()
+
+    def log(self, logs: Dict[str, float]) -> None:
+        """
+        Log `logs` on the various objects watching training.
+        Subclass and override this method to inject custom behavior.
+        Args:
+            logs (`Dict[str, float]`):
+                The values to log.
+        """
+        if self.state.epoch is not None:
+            logs["epoch"] = round(self.state.epoch, 2)
+        if "contrastive" in self.loss:
+            logs["contrastive_loss"] = np.mean(self.last_losses["contrastive"])
+            self.last_losses["contrastive"] = list()
+        if "mse_margin" in self.loss:
+            logs["mse_margin_loss"] = np.mean(self.last_losses["mse_margin"])
+            self.last_losses["mse_margin"] = list()
+        if "kldiv" in self.loss:
+            logs["kldiv_loss"] = np.mean(self.last_losses["kldiv"])
+            self.last_losses["kldiv"] = list()
+
+        output = {**logs, **{"step": self.state.global_step}}
+        self.state.log_history.append(output)
+        self.control = self.callback_handler.on_log(self.args, self.state, self.control, logs)
+
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        """
+        How the loss is computed by Trainer. By default, all models return the loss in the first element.
+        Subclass and override for custom behavior.
+        """
+        teacher_scores = inputs["scores"]
+        del inputs["scores"]
+
+        output = model(**inputs)
+        logits = output.logits
+        scores = logits[:,0]
+        scores = scores.view(-1,self.n_negatives+1)
+        teacher_scores = teacher_scores.view(-1,self.n_negatives+1)
+        losses = list()
+
+        if "contrastive" in self.loss:
+            labels_index = torch.zeros(scores.size(0)).to(scores.device).long() # shape (bsz)
+            ce_loss = self.ce_loss(scores, labels_index).mean()
+            if "with_weights" in self.loss:
+                weight = 0.01
+            else:
+                weight = 1.0
+            losses.append(weight*ce_loss)
+            self.last_losses["contrastive"].append(ce_loss.cpu().detach().item())
+
+        if "mse_margin" in self.loss:
+            scores_a = scores.unsqueeze(1) # shape (bsz, 1 ,nb_neg)
+            scores_b = scores.unsqueeze(2) # shape (bsz, nb_neg, 1)
+            margin_student = scores_a - scores_b # shape (bsz, nb_neg, 1)
+
+            teacher_scores = teacher_scores.view(scores.size()).to(scores.device)
+            teacher_scores_a = teacher_scores.unsqueeze(1) # shape (bsz, 1 ,nb_neg)
+            teacher_scores_b = teacher_scores.unsqueeze(2) # shape (bsz, nb_neg, 1)
+            margin_teacher = teacher_scores_a - teacher_scores_b # shape (bsz, nb_neg, 1)
+
+            mse_loss = self.mse_loss(margin_student,margin_teacher).mean(dim=2).mean(dim=1).mean(dim=0)
+
+            if "with_weights" in self.loss:
+                weight = 0.05
+            else:
+                weight = 1.0
+            losses.append(weight*mse_loss)
+            self.last_losses["mse_margin"].append(mse_loss.cpu().detach().item())
+
+        # distillation with kld loss
+        if "kldiv" in self.loss:
+            temperature = 1
+            student_scores = torch.log_softmax(scores*temperature,dim=1)
+            teacher_scores = teacher_scores.view(scores.size()).to(scores.device)
+            teacher_scores = torch.softmax(teacher_scores*temperature,dim=1)
+
+            kldiv_loss = self.distil_loss(student_scores, teacher_scores).sum(dim=1).mean(dim=0)
+            if "with_weights" in self.loss:
+                weight = 0.99
+            else:
+                weight = 1.0
+            losses.append(weight*kldiv_loss)
+            self.last_losses["kldiv"].append(kldiv_loss.cpu().detach().item())
+
+        loss = 0
+        for loss_ in losses:
+            loss = loss + loss_
+            
+        if not return_outputs:
+            return loss
+        else:
+            return loss, [output]

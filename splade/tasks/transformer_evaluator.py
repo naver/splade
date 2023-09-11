@@ -264,3 +264,112 @@ class SparseApproxEvalWrapper(Evaluator):
         retriever = SparseRetrieval(self.model, self.config, dim_voc=self.model_output_dim, index_d=sparse_index_d,
                                     restore=False, compute_stats=True)
         return retriever.retrieve(self.q_loader, top_k=self.config["top_k"], name=i, return_d=True)
+
+
+
+class RerankEvaluator(Evaluator):
+
+    def __init__(self, model, config, dataset_name=None, **kwargs):
+        super().__init__(model, config, **kwargs)
+        self.init_(config=config,dataset_name=dataset_name)
+
+    def init_(self, config,dataset_name):
+        self.out_dir = os.path.join(config["out_dir"], dataset_name) if dataset_name is not None else config["out_dir"]
+
+    def evaluate(self, data_loader, out_dir, reranker_type, model_name="unicamp-dl/mt5-13b-mmarco-100k"):
+        makedir(out_dir)
+        temp_d = defaultdict(dict)
+        logs = open(os.path.join(out_dir, "eval_logs.txt"), "w")
+        logs.write("begin evaluation on {} batches ...\n".format(len(data_loader)))
+        t0 = time.time()
+        with torch.no_grad():  # the model has already been put in eval mode at init
+            if reranker_type == "monoT5" or reranker_type == "duoT5":
+                if reranker_type == "duoT5":
+                    model = DuoT5(model=self.model)
+                else:
+                    model = MonoT5(model=self.model,use_amp=False,pretrained_model_name_or_path=model_name)
+#                    model = MonoT5(model=self.model,use_amp=False,pretrained_model_name_or_path="unicamp-dl/mt5-13b-mmarco-100k")
+#                    model = MonoT5(model=self.model,use_amp=False,pretrained_model_name_or_path="castorini/monot5-3b-msmarco-10k")
+
+                for query_id, all_list in tqdm(data_loader):
+                    query = all_list[0]
+                    texts = all_list[1:]
+                    reranked = model.rerank(query, texts)
+                    for doc in reranked:
+                        temp_d[str(query_id)][str(doc.metadata["docid"])] = doc.score
+            else:
+                for i, batch in enumerate(tqdm(data_loader)):
+                    for k, v in batch.items():
+                        if k not in ["q_id", "d_id"]:
+                            batch[k] = v.to(self.device)
+                    logits = self.model(**{k: v for k, v in batch.items() if k not in {"q_id", "d_id","labels_attention"}})
+                    logits = logits[0][:, 0]
+
+                    for q_id, d_id, s in zip(batch["q_id"],
+                                            batch["d_id"],
+                                            to_list(logits),
+                                            ):
+                        temp_d[str(q_id)][str(d_id)] = s
+        with open(os.path.join(self.out_dir, "run.json"), "w") as handler:
+            json.dump(temp_d, handler)
+        logs.write("done\ntook about {} hours".format((time.time() - t0) / 3600))
+        return temp_d
+
+class PairwisePromptEvaluator(Evaluator):
+
+    def __init__(self, model, config, position_dict=None, dataset_name=None, **kwargs):
+        super().__init__(model, config, **kwargs)
+        self.init_(config=config, position_dict=position_dict, dataset_name=dataset_name)
+
+    def init_(self, config,dataset_name,position_dict):
+        self.out_dir = os.path.join(config["out_dir"], dataset_name) if dataset_name is not None else config["out_dir"]
+        self.position_dict = position_dict
+
+    @staticmethod
+    def compute_score(results, position_dict):
+        scores = defaultdict(dict)
+        for qid, did_dict in results.items():
+            for did, did_values in did_dict.items():
+                scores[qid][did] = 0
+                for did2, value in did_values.items():
+                    if value > results[qid][did2][did]:
+                        scores[qid][did] += 1
+                    elif value == results[qid][did2][did]:
+                        scores[qid][did] += 0.5
+                scores[qid][did] += 0.001/position_dict[qid][did] # for solving ties
+        return scores
+
+    def evaluate(self, data_loader, out_dir, reranker_type="PairwisePrompt"):
+        makedir(out_dir)
+        t0 = time.time()
+        with torch.no_grad():  # the model has already been put in eval mode at init
+            results = defaultdict(dict)
+            for i, batch in enumerate(tqdm(data_loader)):
+                for k, v in batch.items():
+                    if k not in ["q_id", "d_id_1", "d_id_2"]:
+                        batch[k] = v.to(self.device)
+                outputs = self.model.generate(batch["input_ids"],max_new_tokens=1,output_scores=True,return_dict_in_generate=True).scores[0]
+                result = outputs[:,[71,272]] # 71 is A, 272 is B, hardcoded for FlanT5
+                all_scores = torch.nn.functional.softmax(result,dim=-1)
+
+                for qid, did1, did2, score in zip(batch["q_id"],
+                                        batch["d_id_1"], batch["d_id_2"],
+                                        to_list(all_scores)):
+                    if did1 not in results[qid]:
+                        results[qid][did1] = defaultdict(float)
+                    if did2 not in results[qid]:
+                        results[qid][did2] = defaultdict(float)
+                    
+                    if score[0] > score[1]:
+                        results[qid][did1][did2] = 1
+                    else:
+                        results[qid][did1][did2] = -1    
+                    
+                    
+                    
+        temp_d = PairwisePromptEvaluator.compute_score(results, self.position_dict)
+        with open(os.path.join(self.out_dir, "run.json"), "w") as handler:
+            json.dump(temp_d, handler)
+        print("done\ntook about {} hours".format((time.time() - t0) / 3600))
+        return temp_d
+

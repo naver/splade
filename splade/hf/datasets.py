@@ -164,6 +164,40 @@ class L2I_Dataset(Dataset):
         scores = scores.view(1,-1)
         return docs, scores
     
+class RerankingDataset(L2I_Dataset): 
+
+    def __getitem__(self, idx):
+        query = self.query_list[idx]
+        q = self.query_dataset[query][1]
+        positives = list(self.qrels[query].keys())
+        
+        candidates = [x for x in self.samples[query] if x not in positives]
+
+        positive = random.sample(positives,1)[0]
+
+        if len(candidates) <= self.n_negatives:
+            negative_ids = random.choices(candidates,k=self.n_negatives)
+        else:
+            negative_ids = random.sample(candidates,self.n_negatives)
+
+        d_pos = self.document_dataset[positive][1]
+        negatives = [self.document_dataset[negative][1].strip() for negative in negative_ids]
+        q = q.strip()
+        d_pos = d_pos.strip()
+        
+        docs = [d_pos]
+        docs.extend(negatives)
+        scores_negatives = [self.samples[query][negative] for negative in negative_ids]
+        try: # If there's a score for the positive on the file it uses that score
+            scores = [self.samples[query][positive]]
+        except KeyError: # else it uses the best score of the negatives.
+            scores = [max(v for k,v in self.samples[query].items())]
+        scores.extend(scores_negatives)
+        scores = torch.tensor(scores)
+        scores = scores.view(1,-1)
+        q = [q for _ in docs]
+        return q, docs, scores
+
 
 class TRIPLET_Dataset():
     """
