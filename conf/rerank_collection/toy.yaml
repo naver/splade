@@ -1,0 +1,14 @@
+# @package _global_
+
+data:
+  document_dir: [data/toy_data/val_collection]
+  docs_ir_dataset: false
+  query_dir: [data/toy_data/val_queries]
+  EVAL_QREL_PATH: [data/toy_data/qrel/qrel.json]
+  dataset_name: [TOY]
+
+config:
+  eval_metric: [[ mrr_10, recall, ndcg_cut ],]
+  retrieval_name: []
+
+

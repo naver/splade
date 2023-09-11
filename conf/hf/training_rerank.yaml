@@ -1,0 +1,16 @@
+# @package hf
+
+training:
+  resume_from_checkpoint: true
+  ddp_find_unused_parameters: false
+  logging_steps: 100
+  report_to: [ tensorboard ]
+  dataloader_drop_last: true
+  training_loss: kldiv
+  num_train_epochs: 5
+  save_strategy: epoch
+  learning_rate: 1e-4
+  warmup_ratio: 0.01
+data:
+  n_negatives: 1
+  
