@@ -57,7 +57,7 @@ python -m splade.hf_train_reranker --config-name=config_reranker_train_toy
 Then  you can apply your reranker:
 ```
 
-python -m splade.rerank --config-name=config_reranker_train_toy data.path_run=[<foopath_out>/run.json]
+python -m splade.rerank --config-name=config_reranker_toy data.path_run=[<foopath_out>/run.json]
 
 ```
 
