@@ -6,16 +6,16 @@ import os
 from typing import Dict, List
 from splade.utils.utils import generate_bow, clean_bow
 
-try:
-    from transformers.adapters.configuration import AdapterConfig
-    from transformers.adapters import (
-        HoulsbyConfig,
-        PfeifferConfig,
-        PrefixTuningConfig,
-        LoRAConfig,
-        CompacterConfig
-        )
-except ImportError: print('no adapter version')
+# try:
+#     from transformers.adapters.configuration import AdapterConfig
+#     from transformers.adapters import (
+#         HoulsbyConfig,
+#         PfeifferConfig,
+#         PrefixTuningConfig,
+#         LoRAConfig,
+#         CompacterConfig
+#         )
+# except ImportError: print('no adapter version')
 
 class SpladeDoc(torch.nn.Module):
 
@@ -58,9 +58,9 @@ class SPLADE(torch.nn.Module):
 
 
     def __init__(self, model_type_or_dir, tokenizer=None, shared_weights=True, n_negatives=-1, splade_doc=False, model_q=None, 
-                 adapter_name: str = None,
-                 adapter_config: str = None, #,Union[str, AdapterConfig] = None, 
-                 load_adapter: str = None,
+                 #adapter_name: str = None,
+                 #adapter_config: str = None, #,Union[str, AdapterConfig] = None, 
+                 #load_adapter: str = None,
                  **kwargs):
         """
         output indicates which representation(s) to output ('MLM' for MLM model)
@@ -83,89 +83,89 @@ class SPLADE(torch.nn.Module):
 
         if splade_doc:
             self.query_encoder = SpladeDoc(tokenizer=tokenizer,output_dim=self.doc_encoder.config.vocab_size)
-            self.query_encoder_adapter_name = adapter_name + "_rep_q" if adapter_name else None
+            #self.query_encoder_adapter_name = adapter_name + "_rep_q" if adapter_name else None
         elif shared_weights:
             self.query_encoder = self.doc_encoder
-            self.query_encoder_adapter_name = None
+            #self.query_encoder_adapter_name = None
         else:
             if model_q:
                 self.query_encoder = AutoModelForMaskedLM.from_pretrained(model_q)
             else:
                 self.query_encoder = AutoModelForMaskedLM.from_pretrained(model_type_or_dir)
-            self.query_encoder_adapter_name = adapter_name + "_rep_q" if adapter_name else None
+            #self.query_encoder_adapter_name = adapter_name + "_rep_q" if adapter_name else None
 
-        self.adapter_config = adapter_config
-        self.doc_encoder_adapter_name = adapter_name + "_rep" if adapter_name else None
-        # RV ?? 
-        if load_adapter:
-            print("Loading adapter {}".format(load_adapter))
-            self.doc_encoder.load_adapter(load_adapter)
-            self.doc_encoder.set_active_adapters(self.doc_encoder_adapter_name)
-        elif self.doc_encoder_adapter_name:
-            self.initialize_adapters()
+        # self.adapter_config = adapter_config
+        # self.doc_encoder_adapter_name = adapter_name + "_rep" if adapter_name else None
+        # # RV ?? 
+        # if load_adapter:
+        #     print("Loading adapter {}".format(load_adapter))
+        #     self.doc_encoder.load_adapter(load_adapter)
+        #     self.doc_encoder.set_active_adapters(self.doc_encoder_adapter_name)
+        # elif self.doc_encoder_adapter_name:
+        #     self.initialize_adapters()
 
-    def initialize_adapters(self, **kwargs):
-            leave_out = [kwargs.get('leave_out', "")] if isinstance(kwargs.get('leave_out', ""), int) \
-                        else kwargs.get('leave_out', "")
-            if isinstance(self.adapter_config, str):
-                if self.adapter_config.lower() == "houlsby":
-                    config = HoulsbyConfig(leave_out=list(map(int, leave_out.strip().split())))
-                elif self.adapter_config.lower() == "pfeiffer":
-                    config = PfeifferConfig(leave_out=list(map(int, leave_out.strip().split())))
-                elif self.adapter_config.lower() == "prefix_tuning":
-                    prefix_length = kwargs.get("prefix_length", 30)
-                    config = PrefixTuningConfig(flat=True, prefix_length=prefix_length)
-                elif self.adapter_config.lower() == "lora":
-                    r = kwargs.get("r", 8)
-                    alpha = kwargs.get("alpha", 16)
-                    config = LoRAConfig(r=r, alpha=alpha)
-                elif self.adapter_config == "compacter":
-                    config = CompacterConfig()
-                else:
-                    raise ValueError('Adapter Config can be of type: 1. houlsby\n 2. pfeiffer\n 3.prefix_tuning \n4. lora\n')
-            elif isinstance(self.adapter_config, AdapterConfig):
-                config = self.adapter_config
-            else:
-                original_ln_after = kwargs.pop("original_ln_after", True)
-                residual_before_ln = kwargs.pop("residual_before_ln", True)
-                adapter_residual_before_ln = kwargs.pop("adapter_residual_before_ln", True)
-                ln_before = kwargs.pop("ln_before", True)
-                ln_after = kwargs.pop("ln_after", True)
-                mh_adapter = kwargs.pop("mh_adapter", True)
-                output_adapter = kwargs.pop("output_adapter", True)
-                non_linearity = kwargs.pop("non_linearity", "relu")
-                reduction_factor = kwargs.pop("reduction_factor", 64)
-                inv_adapter = kwargs.pop("inv_adapter", None)
-                inv_adapter_reduction_factor = kwargs.pop("inv_adapter_reduction_factor", 64)
-                cross_adapter = kwargs.pop("cross_adapter", True)
-                config = AdapterConfig(original_ln_after=original_ln_after,
-                                       residual_before_ln=residual_before_ln,
-                                       adapter_residual_before_ln=adapter_residual_before_ln,
-                                       ln_before=ln_before,
-                                       ln_after=ln_after,
-                                       mh_adapter=mh_adapter,
-                                       output_adapter=output_adapter,
-                                       non_linearity=non_linearity,
-                                       reduction_factor=reduction_factor,
-                                       inv_adapter=inv_adapter,
-                                       inv_adapter_reduction_factor=inv_adapter_reduction_factor,
-                                       cross_adapter=cross_adapter,
-                                       leave_out=leave_out
-                                       )
-            # load adapters from local directory for resuming training or evaluation
-            if os.path.isdir(self.doc_encoder_adapter_name): 
-                self.doc_encoder.load_adapter(self.doc_encoder_adapter_name)
-                if self.query_encoder_adapter_name and os.path.isdir(self.query_encoder_adapter_name): 
-                    self.query_encoder.load_adapter(self.query_encoder_adapter_name)
-            else: # add new adapters for training from scratch
-                self.doc_encoder.add_adapter(self.doc_encoder_adapter_name, config=config)
-                if self.query_encoder_adapter_name:
-                    self.query_encoder.add_adapter(self.query_encoder_adapter_name, config=config)
-            self.doc_encoder.set_active_adapters(self.doc_encoder_adapter_name)
-            self.doc_encoder.train_adapter(self.doc_encoder_adapter_name)
-            if self.query_encoder_adapter_name:
-                self.query_encoder.set_active_adapters(self.query_encoder_adapter_name)
-                self.query_encoder.train_adapter(self.query_encoder_adapter_name)
+    # def initialize_adapters(self, **kwargs):
+    #         leave_out = [kwargs.get('leave_out', "")] if isinstance(kwargs.get('leave_out', ""), int) \
+    #                     else kwargs.get('leave_out', "")
+    #         if isinstance(self.adapter_config, str):
+    #             if self.adapter_config.lower() == "houlsby":
+    #                 config = HoulsbyConfig(leave_out=list(map(int, leave_out.strip().split())))
+    #             elif self.adapter_config.lower() == "pfeiffer":
+    #                 config = PfeifferConfig(leave_out=list(map(int, leave_out.strip().split())))
+    #             elif self.adapter_config.lower() == "prefix_tuning":
+    #                 prefix_length = kwargs.get("prefix_length", 30)
+    #                 config = PrefixTuningConfig(flat=True, prefix_length=prefix_length)
+    #             elif self.adapter_config.lower() == "lora":
+    #                 r = kwargs.get("r", 8)
+    #                 alpha = kwargs.get("alpha", 16)
+    #                 config = LoRAConfig(r=r, alpha=alpha)
+    #             elif self.adapter_config == "compacter":
+    #                 config = CompacterConfig()
+    #             else:
+    #                 raise ValueError('Adapter Config can be of type: 1. houlsby\n 2. pfeiffer\n 3.prefix_tuning \n4. lora\n')
+    #         elif isinstance(self.adapter_config, AdapterConfig):
+    #             config = self.adapter_config
+    #         else:
+    #             original_ln_after = kwargs.pop("original_ln_after", True)
+    #             residual_before_ln = kwargs.pop("residual_before_ln", True)
+    #             adapter_residual_before_ln = kwargs.pop("adapter_residual_before_ln", True)
+    #             ln_before = kwargs.pop("ln_before", True)
+    #             ln_after = kwargs.pop("ln_after", True)
+    #             mh_adapter = kwargs.pop("mh_adapter", True)
+    #             output_adapter = kwargs.pop("output_adapter", True)
+    #             non_linearity = kwargs.pop("non_linearity", "relu")
+    #             reduction_factor = kwargs.pop("reduction_factor", 64)
+    #             inv_adapter = kwargs.pop("inv_adapter", None)
+    #             inv_adapter_reduction_factor = kwargs.pop("inv_adapter_reduction_factor", 64)
+    #             cross_adapter = kwargs.pop("cross_adapter", True)
+    #             config = AdapterConfig(original_ln_after=original_ln_after,
+    #                                    residual_before_ln=residual_before_ln,
+    #                                    adapter_residual_before_ln=adapter_residual_before_ln,
+    #                                    ln_before=ln_before,
+    #                                    ln_after=ln_after,
+    #                                    mh_adapter=mh_adapter,
+    #                                    output_adapter=output_adapter,
+    #                                    non_linearity=non_linearity,
+    #                                    reduction_factor=reduction_factor,
+    #                                    inv_adapter=inv_adapter,
+    #                                    inv_adapter_reduction_factor=inv_adapter_reduction_factor,
+    #                                    cross_adapter=cross_adapter,
+    #                                    leave_out=leave_out
+    #                                    )
+    #         # load adapters from local directory for resuming training or evaluation
+    #         if os.path.isdir(self.doc_encoder_adapter_name): 
+    #             self.doc_encoder.load_adapter(self.doc_encoder_adapter_name)
+    #             if self.query_encoder_adapter_name and os.path.isdir(self.query_encoder_adapter_name): 
+    #                 self.query_encoder.load_adapter(self.query_encoder_adapter_name)
+    #         else: # add new adapters for training from scratch
+    #             self.doc_encoder.add_adapter(self.doc_encoder_adapter_name, config=config)
+    #             if self.query_encoder_adapter_name:
+    #                 self.query_encoder.add_adapter(self.query_encoder_adapter_name, config=config)
+    #         self.doc_encoder.set_active_adapters(self.doc_encoder_adapter_name)
+    #         self.doc_encoder.train_adapter(self.doc_encoder_adapter_name)
+    #         if self.query_encoder_adapter_name:
+    #             self.query_encoder.set_active_adapters(self.query_encoder_adapter_name)
+    #             self.query_encoder.train_adapter(self.query_encoder_adapter_name)
 
 
     def forward(self, **tokens):
@@ -192,22 +192,20 @@ class SPLADE(torch.nn.Module):
         return queries_result,docs_result
 
     def save(self,output_dir, tokenizer):
-        #self.doc_encoder.save_pretrained(output_dir)
-            #self.doc_encoder_adapter_name
-        if self.doc_encoder_adapter_name and self.doc_encoder.active_adapters:
-            self.doc_encoder.save_all_adapters(output_dir)
-        else:
-            model_dict = self.doc_encoder.state_dict()
-            torch.save(model_dict, os.path.join(output_dir,  "pytorch_model.bin"))
-            self.doc_encoder.config.save_pretrained(output_dir)
+        # if self.doc_encoder_adapter_name and self.doc_encoder.active_adapters:
+        #     self.doc_encoder.save_all_adapters(output_dir)
+        # else:
+        model_dict = self.doc_encoder.state_dict()
+        torch.save(model_dict, os.path.join(output_dir,  "pytorch_model.bin"))
+        self.doc_encoder.config.save_pretrained(output_dir)
 
         if not self.shared_weights:
             query_output_dir = os.path.join(output_dir,"query")
             os.makedirs(query_output_dir, exist_ok=True)
-            if self.doc_encoder_adapter_name and self.query_encoder.active_adapters:
-                self.query_encoder.save_all_adapters(query_output_dir)
-            else:
-                self.query_encoder.save_pretrained(query_output_dir)
+            # if self.doc_encoder_adapter_name and self.query_encoder.active_adapters:
+                # self.query_encoder.save_all_adapters(query_output_dir)
+            # else:
+            self.query_encoder.save_pretrained(query_output_dir)
             self.query_encoder.config.save_pretrained(query_output_dir)
             if tokenizer:
                 tokenizer.save_pretrained(query_output_dir)

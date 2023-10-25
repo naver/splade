@@ -38,8 +38,8 @@ def hf_train(exp_dict: DictConfig):
     else:
         model = SPLADE(
             model_args.model_name_or_path,shared_weights=model_args.shared_weights,n_negatives=data_args.n_negatives,
-            tokenizer=tokenizer, splade_doc=model_args.splade_doc, model_q=model_args.model_q,
-            adapter_name=model_args.adapter_name, adapter_config=model_args.adapter_config, load_adapter=model_args.load_adapter)
+            tokenizer=tokenizer, splade_doc=model_args.splade_doc, model_q=model_args.model_q)
+            #adapter_name=model_args.adapter_name, adapter_config=model_args.adapter_config, load_adapter=model_args.load_adapter)
 
     # load the dataset
     data_collator= L2I_Collator(tokenizer=tokenizer,max_length=model_args.max_length)

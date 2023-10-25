@@ -42,20 +42,20 @@ class ModelArguments:
         default=False
     )
 
-    adapter_name: str = field(
-        metadata={"help": "Adapter name"},
-        default=None
-    )
+    # adapter_name: str = field(
+    #     metadata={"help": "Adapter name"},
+    #     default=None
+    # )
 
-    adapter_config: str = field(
-        metadata={"help": "Adapter Config/Type : {houlsby, pfeiffer, prefixtuning, LoRA"},
-        default=None
-    )
+    # adapter_config: str = field(
+    #     metadata={"help": "Adapter Config/Type : {houlsby, pfeiffer, prefixtuning, LoRA"},
+    #     default=None
+    # )
 
-    load_adapter: str = field(
-        metadata={"help": "Adapter to load"},
-        default=None
-    )
+    # load_adapter: str = field(
+    #     metadata={"help": "Adapter to load"},
+    #     default=None
+    # )
 
 
 @dataclass

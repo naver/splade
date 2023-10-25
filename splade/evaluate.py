@@ -25,7 +25,6 @@ def evaluate(exp_dict: DictConfig):
         if qrel_file_path is not None:
             res = {}
             print(eval_metrics)
-            print(out_dir, dataset_name, 'run.json')
             for metric in eval_metrics:
                 qrel_fp=qrel_file_path
                 res.update(load_and_evaluate(qrel_file_path=qrel_fp,

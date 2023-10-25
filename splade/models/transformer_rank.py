@@ -2,10 +2,10 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig, AutoModelForSeq2SeqLM,T5EncoderModel,MT5EncoderModel
 from transformers.modeling_outputs import SequenceClassifierOutput
 
-try:
-    from transformers.adapters import ParallelConfig,AdapterConfig
-except:
-    print("No adapters")
+# try:
+#     from transformers.adapters import ParallelConfig,AdapterConfig
+# except:
+#     print("No adapters")
 
 from splade.tasks.amp import NullContextManager
 

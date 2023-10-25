@@ -45,10 +45,10 @@ def convert(exp_dict):
 
     # ad tokenizer to model_args ?
     m.tokenizer_name_or_path = config.tokenizer_type
-    try:
-        m.adapter_name = config.adapter_name
-        m.adapter_config = config.adapter_config
-    except : pass # no adapter
+    # try:
+    #     m.adapter_name = config.adapter_name
+    #     m.adapter_config = config.adapter_config
+    # except : pass # no adapter
 
 
 

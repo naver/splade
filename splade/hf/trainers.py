@@ -27,28 +27,28 @@ class BaseTrainer(Trainer):
         if model is None:
            model=self.model
 
-        if model.doc_encoder_adapter_name:
-            model.doc_encoder.load_adapter(os.path.join(resume_from_checkpoint,model.doc_encoder_adapter_name))
-            # query
-            if model.query_encoder_adapter_name:
-                model.query_encoder.load_adapter(os.path.join(resume_from_checkpoint,'query',model.query_encoder_adapter_name))
-
+        # if model.doc_encoder_adapter_name:
+        #     model.doc_encoder.load_adapter(os.path.join(resume_from_checkpoint,model.doc_encoder_adapter_name))
+        #     # query
+        #     if model.query_encoder_adapter_name:
+        #         model.query_encoder.load_adapter(os.path.join(resume_from_checkpoint,'query',model.query_encoder_adapter_name))
+# 
+        # else:
+        WEIGHTS_NAME = "pytorch_model.bin"
+        # We load the model state dict on the CPU to avoid an OOM error.
+        state_dict = torch.load(os.path.join(resume_from_checkpoint, WEIGHTS_NAME), map_location="cpu")
+        # workaround for FSDP bug https://github.com/pytorch/pytorch/issues/82963
+        # which takes *args instead of **kwargs
+        load_result = model.doc_encoder.load_state_dict(state_dict, False)
+        #query
+        if model.shared_weights:
+            model.query_encoder = model.doc_encoder
         else:
-            WEIGHTS_NAME = "pytorch_model.bin"
-            # We load the model state dict on the CPU to avoid an OOM error.
-            state_dict = torch.load(os.path.join(resume_from_checkpoint, WEIGHTS_NAME), map_location="cpu")
-            # workaround for FSDP bug https://github.com/pytorch/pytorch/issues/82963
-            # which takes *args instead of **kwargs
-            load_result = model.doc_encoder.load_state_dict(state_dict, False)
-            #query
-            if model.shared_weights:
-                model.query_encoder = model.doc_encoder
-            else:
-                state_dict = torch.load(os.path.join(resume_from_checkpoint, "query",WEIGHTS_NAME), map_location="cpu")
-                load_result = model.query_encoder.load_state_dict(state_dict, False)
-            # release memory
-            del state_dict
-            self._issue_warnings_after_load(load_result)
+            state_dict = torch.load(os.path.join(resume_from_checkpoint, "query",WEIGHTS_NAME), map_location="cpu")
+            load_result = model.query_encoder.load_state_dict(state_dict, False)
+        # release memory
+        del state_dict
+        self._issue_warnings_after_load(load_result)
 
     def _save(self, output_dir, state_dict=None):
         ## SAVE CHECKPOINT !
