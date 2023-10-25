@@ -1,0 +1,37 @@
+defaults:  # (these specify which config FILES to use)
+  - train/config: hf_rerank
+  - train/data: distil_top50_50_random_rescored
+  - hf: training_rerank
+  - rerank_collection: msmarco_trec19
+  - rerank_runs: new_baseline_trec19
+
+config:  # to be provided for each run
+  checkpoint_dir: ??
+  out_dir: ??
+  pretrained_no_yamlconfig: False
+  tokenizer_type: naver/trecdl22-crossencoder-debertav3
+  seed: 123
+  eval_batch_size: 200
+  reranker_type: minilm
+  top_k: 100
+  hf_training: true
+  fp16: false
+
+init_dict:
+  model_type_or_dir: naver/trecdl22-crossencoder-debertav3
+  model_type_or_dir_q: null
+  fp16: true
+  bf16: false
+
+hf:
+  training:
+    fp16: true
+    bf16: false
+  model:
+    dense: false
+  data:
+    prompt_q: "Query: {}\n"
+    prompt_d: "Document: {}\n"    
+
+ir_datasets:
+  dataset_path: /gfs-ssd/project/neuralsearch/bkup/classanc/ir_datasets/

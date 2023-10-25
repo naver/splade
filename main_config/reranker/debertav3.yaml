@@ -1,0 +1,24 @@
+defaults:  # (these specify which config FILES to use)
+  - rerank_collection: msmarco_trechard
+  - rerank_runs: new_baseline_trec20
+
+config:  # to be provided for each run
+  out_dir: experiments/rerankers/debertav3/out/
+  pretrained_no_yamlconfig: True
+  tokenizer_type: naver/trecdl22-crossencoder-debertav3
+  index_retrieve_batch_size: 200
+  batch_size: 200
+  max_length: 512
+  eval_batch_size: 200
+  reranker_type: debertav3
+  top_k: 1000
+  return_token_type_ids: True
+
+init_dict:
+  model_type_or_dir: naver/trecdl22-crossencoder-debertav3
+  fp16: true
+  bf16: false
+
+
+ir_datasets:
+  dataset_path: ???
