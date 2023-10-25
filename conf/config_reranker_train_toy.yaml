@@ -13,7 +13,7 @@ config:  # to be provided for each run
   seed: 123
   eval_batch_size: 200
   reranker_type: minilm
-  top_k: 100
+  top_k: 2
   hf_training: true
   fp16: false
 
