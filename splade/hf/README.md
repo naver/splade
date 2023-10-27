@@ -1,9 +1,9 @@
 # SPLADE - HuggingFace training
 
 **TL; DR** We provide a new code version to train SPLADE models based on HuggingFace trainers. Compared to the original code base, it allows training SPLADE with several *hard* negatives, training with Distributed Data Parallel etc., making the overall training process more effective and efficient. 
-It also differs in various aspects -- for instance, we remove the scheduler for the regularization hyperparameters, add the "anti-zero" trick to avoid representations collapsing to zero vectors etc. 
+It also differs in various aspects -- for instance, we remove the scheduler for the regularization hyperparameters, the way we compute the FLOPS, add an "anti-zero" regularization to avoid representations collapsing to zero vectors etc. 
 
-This code is solely meant to **train** models. To index and retrieve with SPLADE, everything remains the same. Tested with:
+This code is solely meant to **train** models. To index and retrieve with SPLADE, everything *remains the same*. Tested with:
 
 ```pip install torch transformers==4.29.2  hydra-core faiss-cpu pytest numba h5py pytrec_eval tensorboard  accelerate  matplotlib```
 
@@ -34,7 +34,7 @@ torchrun --nproc_per_node 2 -m splade.hf_train --config-name=config_hf_splade_l1
 
 ```
 
-### Toy example: Indexing a colelction with SPLADE model
+### Toy example: Indexing a collection with SPLADE model
 After training, indexing and retrieval can be launched with :
 
 ```
@@ -45,16 +45,16 @@ python   -m splade.retrieve - --config-dir=/scratch/2/user/hdejean/expfoo/be3/ -
 
 ```
 
-### Toy example: training a reranker
-You can now train your reranker using the SPLADE output:
+### Toy example: Training a Reranker
+You can now train your reranker using the SPLADE output (ie the top retrieved items for your training queries) :
 ```
 
 python -m splade.hf_train_reranker --config-name=config_reranker_train_toy
 
 ```
-### Toy example: Reranker a SPLADE output
+### Toy example: Reranking a SPLADE output run
 
-Then  you can apply your reranker:
+Then  you can apply your reranker (inference step):
 ```
 
 python -m splade.rerank --config-name=config_reranker_toy data.path_run=[<foopath_out>/run.json]
