@@ -30,7 +30,7 @@ To keep full backward compatibility with the original SPLADE code, we allow trai
 In particular, training can be launched with :
 
 ```
-torchrun --nproc_per_node 2 -m splade.hf_train --config-name=config_hf_splade_l1q.yaml  config.checkpoint_dir=<foopath_chk>
+torchrun --nproc_per_node 2 -m splade.hf_train --config-name=config_hf_splade_l1q.yaml  config.checkpoint_dir=<chk_dir>
 
 ```
 
@@ -39,9 +39,9 @@ After training, indexing and retrieval can be launched with :
 
 ```
 
-python  -m splade.index --config-dir=<foopath_chk> --config-name=config config.index_dir=<foopath_index>
+python  -m splade.index --config-dir=<chk_dir> --config-name=config config.index_dir=<index_dir>
 
-python   -m splade.retrieve - --config-dir=/scratch/2/user/hdejean/expfoo/be3/ --config-name=config config.index_dir=<foopath_index> config.out_dir=<foopath_out>
+python   -m splade.retrieve - --config-dir=<chk_dir> --config-name=config config.index_dir=<index_dir> config.out_dir=<out_dir>
 
 ```
 
@@ -57,7 +57,7 @@ python -m splade.hf_train_reranker --config-name=config_reranker_train_toy
 Then  you can apply your reranker (inference step):
 ```
 
-python -m splade.rerank --config-name=config_reranker_toy data.path_run=[<foopath_out>/run.json]
+python -m splade.rerank --config-name=config_reranker_toy data.path_run=[<out_dir>/run.json]
 
 ```
 
