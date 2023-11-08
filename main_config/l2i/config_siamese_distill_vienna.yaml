@@ -1,0 +1,16 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: siamese_distil.yaml
+  - train/data: distil_from_vienna 
+  - train/model: siamese
+############## INDEX ###################################
+  - index: fixed_msmarco
+
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+
+config:  # to be provided for each run
+  checkpoint_dir:  ../exp/siamese/checkpoint
+  index_dir: ../exp/siamese/index
+  out_dir: ../exp/siamese/out
+  fp16: true

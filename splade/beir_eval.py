@@ -22,6 +22,11 @@ from .utils.utils import get_initialize_config
 def retrieve(exp_dict: DictConfig):
     exp_dict, config, init_dict, model_training_config = get_initialize_config(exp_dict)
 
+    #if HF: need to udate config.
+    if "hf_training" in config:
+       init_dict.model_type_or_dir=os.path.join(config.checkpoint_dir,"model")
+       init_dict.model_type_or_dir_q=os.path.join(config.checkpoint_dir,"model/query") if init_dict.model_type_or_dir_q else None
+       
     model = get_model(config, init_dict)
 
     batch_size_d = config["index_retrieve_batch_size"]

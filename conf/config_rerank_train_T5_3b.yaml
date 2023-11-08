@@ -1,0 +1,35 @@
+defaults:  # (these specify which config FILES to use)
+  - train/config: hf_rerank
+  - train/data: hf_toy
+  - hf: training_rerank
+  - rerank_collection: toy
+  - rerank_runs: toy
+
+config:  # to be provided for each run
+  checkpoint_dir: experiments/train_reranker/rankT5_3b_kldiv_pure/checkpoint/ 
+  out_dir: experiments/train_reranker/rankT5_3b_kldiv_pure/out/
+  pretrained_no_yamlconfig: False
+  tokenizer_type: t5-3b
+  seed: 123
+  eval_batch_size: 50
+  reranker_type: rankT5
+  top_k: 100
+  hf_training: true
+  fp16: false
+
+init_dict:
+  model_type_or_dir: t5-3b
+  model_type_or_dir_q: null
+  fp16: false
+  bf16: true
+
+hf:
+  training:
+    fp16: false
+    bf16: true
+  model:
+    dense: false
+  data:
+    prompt_q: "Query: {}\n"
+    prompt_d: "Document: {}\n"    
+

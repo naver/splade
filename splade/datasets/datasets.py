@@ -160,3 +160,76 @@ class MsMarcoHardNegatives(Dataset):
         d_pos = self.document_dataset[positive][1]
         d_neg = self.document_dataset[str(negative)][1]
         return q.strip(), d_pos.strip(), d_neg.strip(), float(s_pos), float(s_neg)
+
+
+class IR_Dataset(Dataset):
+    """
+    dataset to iterate over a document/query collection, receives a dictionary id, text
+    """
+
+    def __init__(self, ir_dataset, information_type="document", sequential_idx=True, all_docs=None):
+        assert information_type in ["document", "query"]
+        self.ir_dataset = ir_dataset
+        
+        self.information_type = information_type
+        self.value_dictionary = dict()
+        self.key_to_id = dict()
+        self.sequential_idx = sequential_idx
+        self.all_docs = all_docs
+
+        # We use the natural order of query/document as key, because ids of the different beir datasets
+        # have different types (str vs int) which is problematic with FAISS index.
+        if self.information_type == "document":
+            for idx, value in enumerate(tqdm(ir_dataset.docs_iter())):
+                if not sequential_idx:
+                    idx = value.doc_id
+                    if all_docs:
+                        if idx not in all_docs:
+                            continue
+                    idx = value.doc_id.replace('"',"")
+
+                try:
+                    self.value_dictionary[idx] = value.title+" "+value.text
+                except:
+                    try:
+                        self.value_dictionary[idx] = value.body.decode('iso-8859-1')+" "+value.url
+                    except:
+                        self.value_dictionary[idx] = value.text
+                self.key_to_id[idx] = value.doc_id
+        if self.information_type == "query":
+            for idx, value in enumerate(ir_dataset.queries_iter()):
+                if not sequential_idx:
+                    idx = value.query_id
+                self.value_dictionary[idx] = value.text
+                self.key_to_id[idx] = value.query_id
+
+    def __len__(self):
+        return len(self.value_dictionary)
+
+    def __getitem__(self, idx):
+        return idx, self.value_dictionary[idx]
+    
+class IR_Dataset_NoLoad(Dataset):
+    """
+    dataset to iterate over a document/query collection, receives a dictionary id, text
+    """
+
+    def __init__(self, ir_dataset):
+        self.ir_dataset = ir_dataset
+        self.docs_store = ir_dataset.docs_store()
+        all_decoded = dict()
+
+    def __len__(self):
+        return len(self.value_dictionary)
+
+    def __getitem__(self, idx):
+        value = self.docs_store.get(idx)
+        text = ""
+        try: 
+            text = value.title+" "+value.text
+        except:
+            try:
+                text = value.body.decode('iso-8859-1')+" "+value.url
+            except:
+                text = value.text
+        return idx, text

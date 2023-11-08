@@ -1,0 +1,20 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: splade_l1q
+  - train/data: tripclick_hofstaetter
+  - train/model: splade
+############## INDEX ###################################
+  - index: tripclick
+
+############## RETRIEVE ################################
+  - retrieve_evaluate: tripclick_all 
+################ HF TRAINING ###########################
+  - hf: training
+
+config:  # to be provided for each run
+  checkpoint_dir:  /gfs-ssd/user/sclincha/models/tripclick/splade_v1/checkpoint
+  index_dir: /gfs-ssd/user/sclincha/models/tripclick/splade_v1/index
+  out_dir: /gfs-ssd/user/sclincha/models/tripclick/splade_v1/out
+  fp16: true
+  hf_training: true
+

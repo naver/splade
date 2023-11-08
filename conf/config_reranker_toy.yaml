@@ -1,0 +1,27 @@
+defaults:  # (these specify which config FILES to use)
+  - rerank_collection: toy
+  - rerank_runs: toy
+
+config:  # to be provided for each run
+  out_dir: experiments/rerankers/toy/out/
+  pretrained_no_yamlconfig: True
+  tokenizer_type: experiments/train_reranker/toy/model
+  max_length: 512
+  eval_batch_size: 200
+  reranker_type: minilm
+  top_k: 2
+  return_token_type_ids: True
+  add_prefix: False
+
+init_dict:
+  model_type_or_dir: experiments/train_reranker/toy/model
+  fp16: true
+  bf16: false
+
+#data:
+#  path_run: [/scratch/2/user/classanc/TREC/anserini_indexes/runs/farsi/td.trec]
+#  run_name: [splade_2022]
+#  eval_metric: [ mrr_10, recall, ndcg_cut ]
+
+#ir_datasets:
+#  dataset_path: /gfs-ssd/project/neuralsearch/bkup/classanc/ir_datasets/

@@ -1,0 +1,5 @@
+# @package _global_
+
+data:
+  path_run: [/scratch/2/user/hdejean/expfoo/be5.out/TOY/run.json]
+  run_name: [test]

@@ -1,0 +1,37 @@
+defaults:  # (these specify which config FILES to use)
+  - train/config: hf_rerank
+  - train/data: hf_toy
+  - hf: training_rerank
+  - rerank_collection: toy
+  - rerank_runs: toy
+
+config:  # to be provided for each run
+  checkpoint_dir: experiments/train_reranker/toy
+  out_dir: experiments/train_reranker/toy/out/
+  pretrained_no_yamlconfig: False
+  tokenizer_type: cross-encoder/ms-marco-MiniLM-L-6-v2
+  seed: 123
+  eval_batch_size: 200
+  reranker_type: minilm
+  top_k: 2
+  hf_training: true
+  fp16: false
+
+init_dict:
+  model_type_or_dir: cross-encoder/ms-marco-MiniLM-L-6-v2
+  model_type_or_dir_q: null
+  fp16: true
+  bf16: false
+
+hf:
+  training:
+    fp16: true
+    bf16: false
+  model:
+    dense: false
+  data:
+    prompt_q: "Query: {}\n"
+    prompt_d: "Document: {}\n"    
+
+
+

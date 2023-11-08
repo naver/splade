@@ -1,0 +1,16 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: splade
+  - train/data: msmarco
+  - train/model: splade
+############## INDEX ###################################
+  - index: fixed_msmarco
+
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+
+config:  # to be provided for each run
+  checkpoint_dir:  ../exp/splade_max/checkpoint
+  index_dir: ../exp/splade_max/index
+  out_dir: ../exp/splade_max/out
+  fp16: false

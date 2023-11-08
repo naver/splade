@@ -1,0 +1,16 @@
+defaults:
+############## TRAIN ###################################
+  - train/config: splade_distil_l1q
+  - train/data: distil_from_vienna
+  - train/model: splade
+############## INDEX ###################################
+  - index: fixed_msmarco
+
+############## RETRIEVE ################################
+  - retrieve_evaluate: all
+
+config:  # to be provided for each run
+  checkpoint_dir:  ../exp/splade_distil_vienna/checkpoint
+  index_dir: ../exp/splade_distil_vienna/index
+  out_dir: ../exp/splade_distil_vienna/out
+  fp16: true

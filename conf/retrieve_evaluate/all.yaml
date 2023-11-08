@@ -17,4 +17,10 @@ config:
                  [ mrr_10, recall ],
                  [ ndcg_cut ],
                  [ mrr_10, recall ] ]
+  retrieval_name: [ MSMARCO,
+                 TREC_DL_2019,
+                 TREC_DL_2019,
+                 TREC_DL_2020, 
+                 TREC_DL_2020,
+                 ]                 
   threshold: 0
