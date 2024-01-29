@@ -20,11 +20,10 @@ class NullContextManager(object):
 
 class MixedPrecisionManager:
     def __init__(self, activated):
-        assert (not activated) or (not PyTorch_over_1_6), "Cannot use AMP for PyTorch version < 1.6"
-
         print("Using FP16:", activated)
         self.activated = activated
         if self.activated:
+            assert not PyTorch_over_1_6, "Cannot use AMP for PyTorch version < 1.6"
             self.scaler = torch.cuda.amp.GradScaler()
 
     def context(self):
