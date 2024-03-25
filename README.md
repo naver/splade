@@ -151,18 +151,18 @@ with a different batch size, corresponding lambdas for regularization might need
 ### Evaluating a pre-trained model
 
 Indexing (and retrieval) can be done either using our (numba-based) implementation of inverted index,
-or [Anserini](https://github.com/castorini/anserini). Let's perform these steps using an available model (`naver/splade-cocondenser-ensembledistil`).
+or [Anserini](https://github.com/castorini/anserini). Let's perform these steps using an available model (`naver/splade-v3`).
 
 ```bash
 conda activate splade_env
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 export SPLADE_CONFIG_NAME="config_splade++_cocondenser_ensembledistil"
 python3 -m splade.index \
-  init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
+  init_dict.model_type_or_dir=naver/splade-v3 \
   config.pretrained_no_yamlconfig=true \
   config.index_dir=experiments/pre-trained/index
 python3 -m splade.retrieve \
-  init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
+  init_dict.model_type_or_dir=naver/splade-v3 \
   config.pretrained_no_yamlconfig=true \
   config.index_dir=experiments/pre-trained/index \
   config.out_dir=experiments/pre-trained/out
@@ -175,7 +175,7 @@ You can similarly build the files that will be ingested by Anserini:
 
 ```bash
 python3 -m splade.create_anserini \
-  init_dict.model_type_or_dir=naver/splade-cocondenser-ensembledistil \
+  init_dict.model_type_or_dir=naver/splade-v3 \
   config.pretrained_no_yamlconfig=true \
   config.index_dir=experiments/pre-trained/index \
   +quantization_factor_document=100 \
@@ -206,6 +206,11 @@ done
 ### PISA evaluation
 
 We provide in `efficient_splade_pisa/README.md` the steps to evaluate efficient SPLADE models with PISA.
+
+### Two-Step evaluation
+
+We provide in `two-step/README.md` the steps to evaluate Two-Step SPLADE with PISA.
+
 
 ***
 

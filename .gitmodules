@@ -1,0 +1,12 @@
+[submodule "two_step/two_step_pisa"]
+	path = two_step/two_step_pisa
+	url = https://github.com/carlos-lassance/two_step_pisa.git
+[submodule "two_step/faster-graph-bisection"]
+	path = two_step/faster-graph-bisection
+	url = https://github.com/mpetri/faster-graph-bisection.git
+[submodule "two_step/pisa-ciff"]
+	path = two_step/pisa-ciff
+	url = https://github.com/pisa-engine/ciff.git
+[submodule "two_step/ciff"]
+	path = two_step/ciff
+	url = https://github.com/carlos-lassance/ciff.git
