@@ -1,0 +1,7 @@
+anserini_indexes/
+beir/
+results/
+runs/
+ciff_output/
+pisa-canonical/
+pisa-index/

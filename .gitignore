@@ -5,3 +5,7 @@
 model_ckpt/
 ckpt/
 output/
+data/beir
+models/
+outputs/
+SPLADE.egg-info

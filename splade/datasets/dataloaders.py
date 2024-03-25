@@ -121,6 +121,26 @@ class TextCollectionDataLoader(DataLoaderWrapper):
                 "text": d
                 }
 
+class AnseriniCollectionDataLoader(DataLoaderWrapper):
+    """same but also return the input text
+    """
+
+    def collate_fn(self, batch):
+        """
+        batch is a list of tuples, each tuple has 2 (text) items (id_, doc)
+        """
+        id_, d = zip(*batch)
+        processed_passage = self.tokenizer(list(d),
+                                           add_special_tokens=True,
+                                           padding="longest",  # pad to max sequence length in batch
+                                           truncation="longest_first",  # truncates to max model length,
+                                           max_length=self.max_length,
+                                           return_attention_mask=True)
+        return {**{k: torch.tensor(v) for k, v in processed_passage.items()},
+                "id": id_,
+                "text": d
+                }
+
 
 class EvalDataLoader(DataLoaderWrapper):
     """canonical encoding (query and document concatenated)

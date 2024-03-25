@@ -121,6 +121,29 @@ class BeirDataset(Dataset):
         true_idx = self.idx_to_key[idx]
         return idx, self.value_dictionary[true_idx]
 
+class BeirDatasetAnserini(Dataset):
+    """
+    dataset to iterate over a BEIR collection
+    we preload everything in memory at init
+    """
+
+    def __init__(self, value_dictionary, information_type="document"):
+        assert information_type in ["document", "query"]
+        self.value_dictionary = value_dictionary
+        self.information_type = information_type
+        if self.information_type == "document":
+            self.value_dictionary = dict()
+            for key, value in value_dictionary.items():
+                self.value_dictionary[key] = value["title"] + " " + value["text"]
+        self.idx_to_key = {idx: key for idx, key in enumerate(self.value_dictionary)}
+
+    def __len__(self):
+        return len(self.value_dictionary)
+
+    def __getitem__(self, idx):
+        true_idx = self.idx_to_key[idx]
+        return true_idx, self.value_dictionary[true_idx]
+
 
 class MsMarcoHardNegatives(Dataset):
     """

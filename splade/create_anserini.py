@@ -2,7 +2,7 @@ import hydra
 from omegaconf import DictConfig
 
 from conf.CONFIG_CHOICE import CONFIG_NAME, CONFIG_PATH
-from .datasets.dataloaders import TextCollectionDataLoader
+from .datasets.dataloaders import AnseriniCollectionDataLoader
 from .datasets.datasets import CollectionDatasetPreLoad
 from .models.models_utils import get_model
 from .tasks.transformer_evaluator import EncodeAnserini
@@ -24,14 +24,14 @@ def index(exp_dict: DictConfig):
     else:
         raise NotImplementedError
     d_collection = CollectionDatasetPreLoad(data_dir=exp_dict["data"]["COLLECTION_PATH"], id_style="row_id")
-    d_loader = TextCollectionDataLoader(dataset=d_collection, tokenizer_type=model_training_config["tokenizer_type"],
+    d_loader = AnseriniCollectionDataLoader(dataset=d_collection, tokenizer_type=model_training_config["tokenizer_type"],
                                         max_length=model_training_config["max_length"],
                                         batch_size=config["index_retrieve_batch_size"],
                                         shuffle=False, num_workers=4)
     evaluator = EncodeAnserini(model, config)
     evaluator.index(d_loader, quantization_factor=quantization_factor_doc)
     q_collection = CollectionDatasetPreLoad(data_dir=exp_dict["data"]["Q_COLLECTION_PATH"][0], id_style="row_id")
-    q_loader = TextCollectionDataLoader(dataset=q_collection, tokenizer_type=model_training_config["tokenizer_type"],
+    q_loader = AnseriniCollectionDataLoader(dataset=q_collection, tokenizer_type=model_training_config["tokenizer_type"],
                                         max_length=model_training_config["max_length"],
                                         batch_size=config["index_retrieve_batch_size"],
                                         shuffle=False, num_workers=4)

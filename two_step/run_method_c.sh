@@ -1,0 +1,1 @@
+bash run_pisa.sh $1 pruned pruned
