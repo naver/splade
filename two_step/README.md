@@ -1,6 +1,6 @@
 # two-step-splade
 
-This is the code for the Two-Step SPLADE paper (https://www.springerprofessional.de/en/two-step-splade-simple-efficient-and-effective-approximation-of-/26866450). There is two ways of using this code: Either you can replicate our results using our precomputed indexes or you can reproduce it by generating the indexes.
+This is the code for the Two-Step SPLADE paper (https://link.springer.com/chapter/10.1007/978-3-031-56060-6_23). There is two ways of using this code: Either you can replicate our results using our precomputed indexes or you can reproduce it by generating the indexes.
 
 ## Replicating Results
 
