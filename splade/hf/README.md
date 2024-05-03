@@ -38,11 +38,9 @@ torchrun --nproc_per_node 2 -m splade.hf_train --config-name=config_hf_splade_l1
 After training, indexing and retrieval can be launched with :
 
 ```
+python -m splade.index --config-name=config_hf_splade_l1q.yaml config.checkpoint_dir=<chk_dir> config.index_dir=<index_dir>
 
-python  -m splade.index --config-dir=<chk_dir> --config-name=config config.index_dir=<index_dir>
-
-python   -m splade.retrieve - --config-dir=<chk_dir> --config-name=config config.index_dir=<index_dir> config.out_dir=<out_dir>
-
+python -m splade.retrieve --config-name=config_hf_splade_l1q.yaml config.checkpoint_dir=<chk_dir> config.index_dir=<index_dir> config.out_dir=<out_dir>
 ```
 
 ### Toy example: Training a Reranker
