@@ -2,9 +2,6 @@ import torch
 
 # inspired from Colbert repo: https://github.com/stanford-futuredata/ColBERT
 
-PyTorch_over_1_6 = float(".".join([torch.__version__.split('.')[0], torch.__version__.split('.')[1]])) >= 1.6
-
-
 # replace this with  contextlib.nullcontext if python >3.7
 # see https://stackoverflow.com/a/45187287
 class NullContextManager(object):
@@ -20,7 +17,6 @@ class NullContextManager(object):
 
 class MixedPrecisionManager:
     def __init__(self, activated):
-        assert (not activated) or PyTorch_over_1_6, "Cannot use AMP for PyTorch version < 1.6"
 
         print("Using FP16:", activated)
         self.activated = activated
