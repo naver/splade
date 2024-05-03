@@ -1,0 +1,28 @@
+# @package _global_
+
+# FILES
+defaults: # (these specify which config FILES to use)
+  ############## INDEX ###################################
+  - index: msmarco
+  ############## RETRIEVE ################################
+  - retrieve_evaluate: all
+  ############### FLOPS ##################################
+  - flops: msmarco
+
+# Direct PARAMETER setting
+config:
+  checkpoint_dir: models/hf/v3/checkpoint
+  index_dir:  models/hf/v3/index
+  out_dir:  two_step/
+  pretrained_no_yamlconfig: true
+  tokenizer_type: naver/splade-v3
+  index_batch_size: 500
+  eval_batch_size: 500
+  matching_type: splade
+  max_length: 256
+  index_retrieve_batch_size: 400
+init_dict:
+  model_type_or_dir: naver/splade-v3
+  freeze_d_model: 0
+  agg: max
+  fp16: true

@@ -222,7 +222,7 @@ class EncodeAnserini(Evaluator):
                     inputs[k] = v.to(self.device)
                 batch_rep = self.model(**{self.arg_key: inputs})[self.output_key].cpu().numpy()
                 for rep, id_, text in zip(batch_rep, batch["id"], batch["text"]):
-                    id_ = id_.item()
+                    id_ = id_
                     idx = np.nonzero(rep)
                     # then extract values:
                     data = rep[idx]

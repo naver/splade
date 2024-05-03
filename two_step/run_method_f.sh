@@ -1,0 +1,1 @@
+bash run_two_step.sh $1
